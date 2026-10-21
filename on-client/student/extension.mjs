@@ -247,8 +247,8 @@ export function createStudentView() {
         decisionClass = 'decision-challenge';
         decisionNote = '서버가 추가 인증 또는 확인을 요구했습니다. 본 앱이 확인 절차를 대신하지 않습니다.';
       } else {
-        // unknown 또는 목록에 없는 값: 절대 허용이나 정상처럼 보이지 않게 처리
-        decisionText = `확인 불가 (${rawDecision || 'unknown'})`;
+        // unknown 또는 네 판정 목록(allow, deny, challenge)에 없는 모든 값은 표시용 판정을 unknown으로 정규화하여 한국어 뜻과 함께 표시
+        decisionText = '확인 불가 (unknown)';
         decisionClass = 'decision-unknown';
         decisionNote = '판정 결과를 확인할 수 없습니다. 허용되지 않은 상태이며 정상으로 간주하지 마세요.';
       }
