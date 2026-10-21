@@ -6,24 +6,37 @@ export function createStudentView() {
       const container = document.createElement('div');
       container.className = 'student-identity-box';
 
-      // 1. 전달받은 모드(demo, disconnected, unknown) 안내 표시 (loading/error 시에도 표시)
-      const mode = me?.mode || devices?.mode || sessions?.mode || null;
-      if (mode) {
+      // 1. 세 자료(me, devices, sessions)의 mode를 각각 개별 확인하여 서로 다른 모드가 가려지지 않도록 모두 표시 (loading/error 시에도 표시)
+      const modeSources = [
+        { key: 'me', label: '계정', mode: me?.mode },
+        { key: 'devices', label: '기기', mode: devices?.mode },
+        { key: 'sessions', label: '세션', mode: sessions?.mode },
+      ];
+      const validModes = modeSources.filter((item) => Boolean(item.mode));
+      if (validModes.length > 0) {
         const modeWrap = document.createElement('div');
         modeWrap.style.marginBottom = '8px';
-        const modeTag = document.createElement('span');
-        modeTag.className = 'tag';
-        if (mode === 'demo') {
-          modeTag.className = 'tag tag-demo';
-          modeTag.textContent = '예제 자료';
-        } else if (mode === 'disconnected') {
-          modeTag.textContent = '연결 없음';
-        } else if (mode === 'unknown') {
-          modeTag.textContent = '확인 불가';
-        } else {
-          modeTag.textContent = mode;
+        modeWrap.style.display = 'flex';
+        modeWrap.style.gap = '6px';
+        modeWrap.style.flexWrap = 'wrap';
+
+        // 세 자료의 mode를 각각 확인하여 서로 다른 모드가 가려지지 않도록 고유 모드별로 각각 태그 생성
+        const uniqueModes = [...new Set(validModes.map((item) => item.mode))];
+        for (const rawMode of uniqueModes) {
+          const modeTag = document.createElement('span');
+          modeTag.className = 'tag';
+          if (rawMode === 'demo') {
+            modeTag.className = 'tag tag-demo';
+            modeTag.textContent = '예제 자료';
+          } else if (rawMode === 'disconnected') {
+            modeTag.textContent = '연결 없음';
+          } else if (rawMode === 'unknown') {
+            modeTag.textContent = '확인 불가';
+          } else {
+            modeTag.textContent = rawMode;
+          }
+          modeWrap.appendChild(modeTag);
         }
-        modeWrap.appendChild(modeTag);
         container.appendChild(modeWrap);
       }
 
