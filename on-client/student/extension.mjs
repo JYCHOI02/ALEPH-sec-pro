@@ -798,45 +798,45 @@ export function createStudentView() {
       devTitle.textContent = '내 기기 상태';
       devSection.appendChild(devTitle);
 
-      if (!devices || devices.status === 'loading') {
+      if (!devices || devices.status === 'loading' || devices.status === 'idle') {
         const p = document.createElement('p');
         p.className = 'state state-loading';
         p.textContent = '기기 목록을 불러오는 중…';
         devSection.appendChild(p);
       } else if (devices.status === 'error') {
-        const isTimeout = devices.error?.code === 'TIMEOUT' || devices.error?.code === 'REQUEST_TIMEOUT' || String(devices.error?.message).includes('초과');
+        const errObj = typeof devices.error === 'object' && devices.error !== null ? devices.error : { message: String(devices.error || '') };
+        const isTimeout = errObj.code === 'TIMEOUT' || errObj.code === 'REQUEST_TIMEOUT' || errObj.code === 'ENGINE_TIMEOUT' || String(errObj.code).includes('TIMEOUT') || String(errObj.message).includes('초과');
         const timeoutNote = isTimeout ? ' (요청 시간 초과)' : '';
         const p = document.createElement('p');
         p.className = 'state state-error';
-        p.textContent = `기기 목록을 불러오지 못했습니다${timeoutNote}: ${devices.error?.message || '알 수 없는 오류'}`;
+        p.textContent = `기기 목록을 불러오지 못했습니다${timeoutNote}: ${errObj.message || '알 수 없는 오류'}`;
         devSection.appendChild(p);
 
         const retryNote = document.createElement('p');
         retryNote.className = 'muted';
         retryNote.textContent = '다시 시도는 위쪽 다시 불러오기 버튼을 직접 누르세요. (자동으로 다시 요청하지 않습니다.)';
         devSection.appendChild(retryNote);
+      } else if (devices.status === 'empty' || (devices.status === 'ok' && (!Array.isArray(devices.data) || devices.data.length === 0))) {
+        const emptyP = document.createElement('p');
+        emptyP.className = 'state state-empty';
+        emptyP.textContent = '등록된 기기가 없습니다';
+        devSection.appendChild(emptyP);
       } else if (devices.status === 'ok') {
         const devList = Array.isArray(devices.data) ? devices.data : [];
-        if (devList.length === 0) {
-          const emptyP = document.createElement('p');
-          emptyP.className = 'state state-empty';
-          emptyP.textContent = '등록된 기기가 없습니다';
-          devSection.appendChild(emptyP);
-        } else {
-          const ul = document.createElement('ul');
-          ul.className = 'plain-list';
-          for (const d of devList) {
-            const li = document.createElement('li');
-            let statusDesc = '확인 불가';
-            if (d.status === 'compliant') statusDesc = '보안 기준 충족';
-            else if (d.status === 'noncompliant') statusDesc = '보안 기준 미충족';
-            else if (d.status) statusDesc = d.status;
+        const ul = document.createElement('ul');
+        ul.className = 'plain-list';
+        for (const d of devList) {
+          const li = document.createElement('li');
+          let statusDesc = '확인 불가';
+          if (d.status === 'compliant') statusDesc = '보안 기준 충족';
+          else if (d.status === 'noncompliant') statusDesc = '보안 기준 미충족';
+          else if (d.status) statusDesc = d.status;
 
-            li.textContent = `${d.label || d.id || '알 수 없는 기기'} · ${statusDesc} (${d.status || 'unknown'})`;
-            ul.appendChild(li);
-          }
-          devSection.appendChild(ul);
+          const devName = d.id && d.label && d.label !== d.id ? `${d.label} (${d.id})` : (d.label || d.id || '알 수 없는 기기');
+          li.textContent = `${devName} · ${statusDesc} (${d.status || 'unknown'})`;
+          ul.appendChild(li);
         }
+        devSection.appendChild(ul);
       }
       container.appendChild(devSection);
 
@@ -853,46 +853,45 @@ export function createStudentView() {
       sessScopeNote.textContent = '세션은 지금 검증된 연결 하나만 옵니다 (지난 세션 목록이 아닙니다).';
       sessSection.appendChild(sessScopeNote);
 
-      if (!sessions || sessions.status === 'loading') {
+      if (!sessions || sessions.status === 'loading' || sessions.status === 'idle') {
         const p = document.createElement('p');
         p.className = 'state state-loading';
         p.textContent = '세션 정보를 불러오는 중…';
         sessSection.appendChild(p);
       } else if (sessions.status === 'error') {
-        const isTimeout = sessions.error?.code === 'TIMEOUT' || sessions.error?.code === 'REQUEST_TIMEOUT' || String(sessions.error?.message).includes('초과');
+        const errObj = typeof sessions.error === 'object' && sessions.error !== null ? sessions.error : { message: String(sessions.error || '') };
+        const isTimeout = errObj.code === 'TIMEOUT' || errObj.code === 'REQUEST_TIMEOUT' || errObj.code === 'ENGINE_TIMEOUT' || String(errObj.code).includes('TIMEOUT') || String(errObj.message).includes('초과');
         const timeoutNote = isTimeout ? ' (요청 시간 초과)' : '';
         const p = document.createElement('p');
         p.className = 'state state-error';
-        p.textContent = `세션 정보를 불러오지 못했습니다${timeoutNote}: ${sessions.error?.message || '알 수 없는 오류'}`;
+        p.textContent = `세션 정보를 불러오지 못했습니다${timeoutNote}: ${errObj.message || '알 수 없는 오류'}`;
         sessSection.appendChild(p);
 
         const retryNote = document.createElement('p');
         retryNote.className = 'muted';
         retryNote.textContent = '다시 시도는 위쪽 다시 불러오기 버튼을 직접 누르세요. (자동으로 다시 요청하지 않습니다.)';
         sessSection.appendChild(retryNote);
+      } else if (sessions.status === 'empty' || (sessions.status === 'ok' && (!Array.isArray(sessions.data) || sessions.data.length === 0))) {
+        const emptyP = document.createElement('p');
+        emptyP.className = 'state state-empty';
+        emptyP.textContent = '현재 연결 없음 (등록된 세션이 없습니다)';
+        sessSection.appendChild(emptyP);
       } else if (sessions.status === 'ok') {
         const sessList = Array.isArray(sessions.data) ? sessions.data : [];
-        if (sessList.length === 0) {
-          const emptyP = document.createElement('p');
-          emptyP.className = 'state state-empty';
-          emptyP.textContent = '현재 연결 없음 (등록된 세션이 없습니다)';
-          sessSection.appendChild(emptyP);
-        } else {
-          const ul = document.createElement('ul');
-          ul.className = 'plain-list';
-          for (const s of sessList) {
-            const li = document.createElement('li');
-            let statusDesc = '확인 불가';
-            if (s.status === 'active') statusDesc = '활성';
-            else if (s.status === 'expired') statusDesc = '만료';
-            else if (s.status === 'revoked') statusDesc = '철회됨';
-            else if (s.status) statusDesc = s.status;
+        const ul = document.createElement('ul');
+        ul.className = 'plain-list';
+        for (const s of sessList) {
+          const li = document.createElement('li');
+          let statusDesc = '확인 불가';
+          if (s.status === 'active') statusDesc = '활성';
+          else if (s.status === 'expired') statusDesc = '만료';
+          else if (s.status === 'revoked') statusDesc = '철회됨';
+          else if (s.status) statusDesc = s.status;
 
-            li.textContent = `${s.id || '알 수 없는 세션'} · ${statusDesc} (${s.status || 'unknown'})`;
-            ul.appendChild(li);
-          }
-          sessSection.appendChild(ul);
+          li.textContent = `${s.id || '알 수 없는 세션'} · ${statusDesc} (${s.status || 'unknown'})`;
+          ul.appendChild(li);
         }
+        sessSection.appendChild(ul);
       }
       container.appendChild(sessSection);
 
@@ -907,7 +906,7 @@ export function createStudentView() {
       if (notiList.length === 0) {
         const emptyP = document.createElement('p');
         emptyP.className = 'state state-empty';
-        emptyP.textContent = '주의할 알림이 없습니다';
+        emptyP.textContent = '주의할 알림이 없습니다 (알림 없음)';
         notiSection.appendChild(emptyP);
       } else {
         const ul = document.createElement('ul');
@@ -947,6 +946,11 @@ export function createStudentView() {
         p.className = 'state state-loading';
         p.textContent = '도움정보를 불러오는 중…';
         diagSection.appendChild(p);
+      } else if (diagnostics.status === 'empty') {
+        const p = document.createElement('p');
+        p.className = 'state state-empty';
+        p.textContent = '진단 정보가 없습니다';
+        diagSection.appendChild(p);
       } else if (diagnostics.status === 'error') {
         const p = document.createElement('p');
         p.className = 'state state-error';
@@ -978,12 +982,12 @@ export function createStudentView() {
           dl.appendChild(dd);
         };
 
-        addRow('요청 ID', safeFields.requestId);
-        addRow('컴포넌트', safeFields.component);
-        addRow('버전', safeFields.version);
-        addRow('점검 시각', safeFields.checkedAt);
-        addRow('엔진 모드', safeFields.engineMode);
-        addRow('엔진 코드', safeFields.engineCode);
+        addRow('요청 ID (requestId)', safeFields.requestId);
+        addRow('컴포넌트 (component)', safeFields.component);
+        addRow('버전 (version)', safeFields.version);
+        addRow('점검 시각 (checkedAt)', safeFields.checkedAt);
+        addRow('엔진 모드 (engine.mode)', safeFields.engineMode);
+        addRow('엔진 코드 (engine.code)', safeFields.engineCode);
 
         diagSection.appendChild(dl);
 
