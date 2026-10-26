@@ -1156,14 +1156,18 @@ export function createStudentView() {
           pGuide.textContent = '원인 안내: 반 전체 사용량 또는 이용 한도가 모두 소진되었습니다. 잠시 후 다시 시도하거나 운영진에 문의하세요.';
         } else if (errCode === 'WB_CLCO_SESSION_CLOSED') {
           pGuide.textContent = '원인 안내: 현재는 AI 이용 가능 시간이 아닙니다. 수업 또는 실습 시간에 다시 시도하세요.';
-        } else if (['WB_CLCO_RATE_LIMITED', 'WB_CLCO_TIMEOUT', 'REQUEST_TIMEOUT', 'ENGINE_TIMEOUT', 'TIMEOUT'].includes(errCode)) {
-          pGuide.textContent = '원인 안내: 요청이 제한되었거나 응답 시간이 초과되었습니다. 네트워크 상태를 확인하고 잠시 후 다시 시도하세요.';
-        } else if (['WB_CLCO_CANCELLED', 'CANCELLED', 'REQUEST_CANCELLED'].includes(errCode)) {
+        } else if (['WB_CLCO_NETWORK_ERROR', 'WB_CLCO_SERVER_UNAVAILABLE', 'NETWORK_ERROR', 'SERVER_UNAVAILABLE', 'FETCH_ERROR', 'ECONNREFUSED'].includes(errCode) || errCode.includes('NETWORK') || errCode.includes('UNAVAILABLE')) {
+          pGuide.textContent = '원인 안내: 네트워크 오류가 발생했습니다. AI 서버와의 네트워크 연결 상태를 확인하고 잠시 후 다시 시도하세요.';
+        } else if (['WB_CLCO_RATE_LIMITED', 'RATE_LIMITED'].includes(errCode) || errCode.includes('RATE_LIMIT')) {
+          pGuide.textContent = '원인 안내: 요청이 너무 많아 일시적으로 제한되었습니다. 잠시 후 다시 시도하세요.';
+        } else if (['WB_CLCO_TIMEOUT', 'REQUEST_TIMEOUT', 'ENGINE_TIMEOUT', 'TIMEOUT'].includes(errCode) || errCode.includes('TIMEOUT')) {
+          pGuide.textContent = '원인 안내: 응답 시간이 초과되었습니다. 네트워크 연결 상태를 확인하고 잠시 후 다시 시도하세요.';
+        } else if (['WB_CLCO_CANCELLED', 'CANCELLED', 'REQUEST_CANCELLED'].includes(errCode) || errCode.includes('CANCEL')) {
           pGuide.textContent = '원인 안내: AI 연결 점검 요청이 사용자에 의해 취소되었습니다.';
-        } else if (['MODEL_NOT_CONFIGURED', 'ON_AI_MODEL_LIST_EMPTY'].includes(errCode)) {
+        } else if (['MODEL_NOT_CONFIGURED', 'ON_AI_MODEL_LIST_EMPTY'].includes(errCode) || errCode.includes('MODEL')) {
           pGuide.textContent = '원인 안내: 사용 가능한 AI 모델이 구성되지 않았거나 목록이 비어 있습니다.';
         } else {
-          pGuide.textContent = '원인 안내: AI 통신 상태를 확인하고 제공 영역의 점검 버튼으로 다시 시도하세요.';
+          pGuide.textContent = '원인 안내: AI 통신 및 네트워크 연결 상태를 확인하고 제공 영역의 점검 버튼으로 다시 시도하세요.';
         }
         errBox.appendChild(pGuide);
         container.appendChild(errBox);

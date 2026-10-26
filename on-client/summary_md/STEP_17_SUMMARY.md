@@ -52,9 +52,10 @@
 | **2. 인증 실패·접근 제한** | `WB_CLCO_AUTH_REQUIRED`, `WB_CLCO_ACCESS_BLOCKED` | AI 인증이 필요하거나 접근이 제한되었습니다. 워크벤치 연결 상태 및 인증을 확인하세요. |
 | **3. 반 사용량·이용 한도** | `WB_CLCO_COHORT_BUDGET_EXHAUSTED`, `WB_CLCO_LIMIT_REACHED` | 반 전체 사용량 또는 이용 한도가 모두 소진되었습니다. 잠시 후 다시 시도하거나 운영진에 문의하세요. |
 | **4. 이용 시간 아님** | `WB_CLCO_SESSION_CLOSED` | 현재는 AI 이용 가능 시간이 아닙니다. 수업 또는 실습 시간에 다시 시도하세요. |
-| **5. 요청 제한·시간 초과·네트워크** | `WB_CLCO_RATE_LIMITED`, `WB_CLCO_TIMEOUT`, `REQUEST_TIMEOUT`, `ENGINE_TIMEOUT`, `TIMEOUT` | 요청이 제한되었거나 응답 시간이 초과되었습니다. 네트워크 상태를 확인하고 잠시 후 다시 시도하세요. |
-| **6. 취소** | `WB_CLCO_CANCELLED`, `CANCELLED`, `REQUEST_CANCELLED` | AI 연결 점검 요청이 사용자에 의해 취소되었습니다. |
-| **7. 모델 없음** | `MODEL_NOT_CONFIGURED`, `ON_AI_MODEL_LIST_EMPTY` | 사용 가능한 AI 모델이 구성되지 않았거나 목록이 비어 있습니다. |
+| **5. 네트워크 오류·연결 문제** | `WB_CLCO_NETWORK_ERROR`, `WB_CLCO_SERVER_UNAVAILABLE`, `NETWORK_ERROR` | 네트워크 오류가 발생했습니다. AI 서버와의 네트워크 연결 상태를 확인하고 잠시 후 다시 시도하세요. |
+| **6. 요청 제한·시간 초과** | `WB_CLCO_RATE_LIMITED`, `WB_CLCO_TIMEOUT`, `REQUEST_TIMEOUT`, `TIMEOUT` | 요청이 제한되었거나 응답 시간이 초과되었습니다. 잠시 후 다시 시도하세요. |
+| **7. 취소** | `WB_CLCO_CANCELLED`, `CANCELLED`, `REQUEST_CANCELLED` | AI 연결 점검 요청이 사용자에 의해 취소되었습니다. |
+| **8. 모델 없음** | `MODEL_NOT_CONFIGURED`, `ON_AI_MODEL_LIST_EMPTY` | 사용 가능한 AI 모델이 구성되지 않았거나 목록이 비어 있습니다. |
 
 ### 3) AI 사건 설명 기초 구현 (`renderExplanation`)
 * **정상 설명 수용 (`ok`)**:
