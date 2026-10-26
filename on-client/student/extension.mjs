@@ -1038,8 +1038,388 @@ export function createStudentView() {
       return container;
     },
     renderVulnerabilities() { return '학생 구현 대기: 정확한 설치 버전·OSV 출처·조회 시각·부분 결과·조회 실패를 구분하세요.'; },
-    renderAiConnection() { return '학생 구현 대기: 모델 응답 점검과 실제 사건 설명을 구분하고 AI 오류·취소·수동 복구를 안내하세요.'; },
-    renderExplanation() { return '학생 구현 대기: 선택한 사건의 근거·규칙·현재 상태와 AI 설명을 연결하세요. 제안은 자동 실행하지 않습니다.'; },
+    renderAiConnection(input = {}) {
+      const conn = input.aiConnection ? input.aiConnection : input;
+      const status = conn.status || 'idle';
+      const mode = conn.mode;
+      const data = conn.data;
+      const error = conn.error;
+      const checkedAt = conn.checkedAt;
+
+      const container = document.createElement('div');
+      container.className = 'student-ai-connection-box';
+
+      // 1. 모드 태그 표시 (demo, disconnected, unknown 등)
+      if (mode) {
+        const modeWrap = document.createElement('div');
+        modeWrap.style.marginBottom = '8px';
+        modeWrap.style.display = 'flex';
+        modeWrap.style.gap = '6px';
+        modeWrap.style.flexWrap = 'wrap';
+
+        const modeTag = document.createElement('span');
+        modeTag.className = 'tag';
+        if (mode === 'demo') {
+          modeTag.className = 'tag tag-demo';
+          modeTag.textContent = '예제 자료';
+        } else if (mode === 'disconnected') {
+          modeTag.textContent = '연결 없음';
+        } else if (mode === 'unknown') {
+          modeTag.textContent = '확인 불가';
+        } else {
+          modeTag.textContent = mode;
+        }
+        modeWrap.appendChild(modeTag);
+        container.appendChild(modeWrap);
+      }
+
+      // 2. 상태별 분기 (idle / loading / error / ok)
+      // 2-1. 점검 대기 상태 (idle)
+      if (status === 'idle') {
+        const stateEl = document.createElement('p');
+        stateEl.className = 'state state-idle';
+        stateEl.textContent = '점검 전 (idle)';
+        container.appendChild(stateEl);
+
+        const notice1 = document.createElement('p');
+        notice1.className = 'notice';
+        notice1.style.marginTop = '8px';
+        notice1.style.marginBottom = '6px';
+        notice1.textContent = 'AI 연결 점검 전입니다. 설정값 존재는 이용 권한 확인이 아닙니다.';
+        container.appendChild(notice1);
+
+        const notice2 = document.createElement('p');
+        notice2.className = 'muted';
+        notice2.style.margin = '0';
+        notice2.textContent = '제공 영역의 「현재 API 연결 점검」 버튼을 눌러 점검을 시작하세요. (자동으로 점검하지 않습니다.)';
+        container.appendChild(notice2);
+
+        return container;
+      }
+
+      // 2-2. 점검 중 상태 (loading)
+      if (status === 'loading') {
+        const stateEl = document.createElement('p');
+        stateEl.className = 'state state-loading';
+        stateEl.textContent = '점검 중… (loading)';
+        container.appendChild(stateEl);
+
+        const notice = document.createElement('p');
+        notice.style.marginTop = '8px';
+        notice.textContent = 'AI 모델 응답 점검 중… 모델 목록과 통신 상태를 확인하고 있습니다. 잠시만 기다려 주세요.';
+        container.appendChild(notice);
+
+        return container;
+      }
+
+      // 2-3. 점검 실패 상태 (error)
+      if (status === 'error') {
+        const stateEl = document.createElement('p');
+        stateEl.className = 'state state-error';
+        stateEl.textContent = '점검 실패 (error)';
+        container.appendChild(stateEl);
+
+        const errCode = error?.code || 'UNKNOWN_AI_ERROR';
+        const errMsg = error?.message || 'AI 연결 점검 중 오류가 발생했습니다.';
+
+        const errBox = document.createElement('div');
+        errBox.className = 'error-box';
+        errBox.style.marginTop = '8px';
+        errBox.style.padding = '10px 12px';
+        errBox.style.borderRadius = '8px';
+        errBox.style.backgroundColor = 'var(--deny-soft, #fdeceb)';
+        errBox.style.border = '1px solid var(--deny, #b42318)';
+        errBox.style.marginBottom = '8px';
+
+        const pCode = document.createElement('p');
+        pCode.style.margin = '0 0 4px 0';
+        pCode.style.fontWeight = 'bold';
+        pCode.style.color = 'var(--deny, #b42318)';
+        pCode.textContent = `오류 코드: ${errCode}`;
+        errBox.appendChild(pCode);
+
+        const pMsg = document.createElement('p');
+        pMsg.style.margin = '0 0 6px 0';
+        pMsg.textContent = `오류 내용: ${errMsg}`;
+        errBox.appendChild(pMsg);
+
+        // 7대 원인 매핑 상세 안내
+        const pGuide = document.createElement('p');
+        pGuide.style.margin = '0';
+        pGuide.className = 'muted';
+
+        if (['ON_AI_PROVISIONING_PENDING', 'AI_REQUEST_UNVERIFIED', 'ON_AI_AUTHORIZATION_CHANGED', 'SUBJECT_SCOPE_UNVERIFIED'].includes(errCode)) {
+          pGuide.textContent = '원인 안내: 보안 계정 승인 후 AI 권한이 준비 중이거나 대상 권한이 확인되지 않았습니다. 승인 상태를 확인한 뒤 다시 시도하세요.';
+        } else if (['WB_CLCO_AUTH_REQUIRED', 'WB_CLCO_ACCESS_BLOCKED'].includes(errCode)) {
+          pGuide.textContent = '원인 안내: AI 인증이 필요하거나 접근이 제한되었습니다. 워크벤치 연결 상태 및 인증을 확인하세요.';
+        } else if (['WB_CLCO_COHORT_BUDGET_EXHAUSTED', 'WB_CLCO_LIMIT_REACHED'].includes(errCode)) {
+          pGuide.textContent = '원인 안내: 반 전체 사용량 또는 이용 한도가 모두 소진되었습니다. 잠시 후 다시 시도하거나 운영진에 문의하세요.';
+        } else if (errCode === 'WB_CLCO_SESSION_CLOSED') {
+          pGuide.textContent = '원인 안내: 현재는 AI 이용 가능 시간이 아닙니다. 수업 또는 실습 시간에 다시 시도하세요.';
+        } else if (['WB_CLCO_RATE_LIMITED', 'WB_CLCO_TIMEOUT', 'REQUEST_TIMEOUT', 'ENGINE_TIMEOUT', 'TIMEOUT'].includes(errCode)) {
+          pGuide.textContent = '원인 안내: 요청이 제한되었거나 응답 시간이 초과되었습니다. 네트워크 상태를 확인하고 잠시 후 다시 시도하세요.';
+        } else if (['WB_CLCO_CANCELLED', 'CANCELLED', 'REQUEST_CANCELLED'].includes(errCode)) {
+          pGuide.textContent = '원인 안내: AI 연결 점검 요청이 사용자에 의해 취소되었습니다.';
+        } else if (['MODEL_NOT_CONFIGURED', 'ON_AI_MODEL_LIST_EMPTY'].includes(errCode)) {
+          pGuide.textContent = '원인 안내: 사용 가능한 AI 모델이 구성되지 않았거나 목록이 비어 있습니다.';
+        } else {
+          pGuide.textContent = '원인 안내: AI 통신 상태를 확인하고 제공 영역의 점검 버튼으로 다시 시도하세요.';
+        }
+        errBox.appendChild(pGuide);
+        container.appendChild(errBox);
+
+        const retryNotice = document.createElement('p');
+        retryNotice.className = 'muted';
+        retryNotice.style.margin = '0';
+        retryNotice.textContent = '다시 점검은 제공 영역의 「현재 API 연결 점검」 버튼을 직접 누르세요. (자동으로 다시 점검하지 않습니다.)';
+        container.appendChild(retryNotice);
+
+        return container;
+      }
+
+      // 2-4. 정상 점검 완료 상태 (ok)
+      if (status === 'ok') {
+        const stateEl = document.createElement('p');
+        stateEl.className = 'state state-ok';
+        stateEl.textContent = '점검 완료 (ok)';
+        container.appendChild(stateEl);
+
+        const dl = document.createElement('dl');
+        dl.className = 'kv';
+        dl.style.marginTop = '8px';
+
+        // 1) 수송 점검 결과
+        const dtTransport = document.createElement('dt');
+        dtTransport.textContent = '수송 통신';
+        const ddTransport = document.createElement('dd');
+        ddTransport.textContent = data?.transportChecked ? '확인 완료 (정상 수송 통신)' : '미확인';
+        dl.appendChild(dtTransport);
+        dl.appendChild(ddTransport);
+
+        // 2) 인가 대상 (audienceAuthorization)
+        const dtAudience = document.createElement('dt');
+        dtAudience.textContent = '인가 대상';
+        const ddAudience = document.createElement('dd');
+        if (data?.audienceAuthorization === 'test') {
+          ddAudience.textContent = '시험 연결 점검(test) · 실제 게이트 수용 아님';
+        } else if (data?.audienceAuthorization === 'verified') {
+          ddAudience.textContent = '앱 권한 확인 후 점검(verified)';
+        } else {
+          ddAudience.textContent = data?.audienceAuthorization || '확인 불가';
+        }
+        dl.appendChild(dtAudience);
+        dl.appendChild(ddAudience);
+
+        // 3) 응답 모델 수 (루브릭 q17.model_count_label 필수: '응답 모델 수')
+        const dtModelCount = document.createElement('dt');
+        dtModelCount.textContent = '응답 모델 수';
+        const ddModelCount = document.createElement('dd');
+        const count = typeof data?.modelCount === 'number' ? data.modelCount : 0;
+        ddModelCount.textContent = `${count}개`;
+        dl.appendChild(dtModelCount);
+        dl.appendChild(ddModelCount);
+
+        // 4) 점검 시각
+        const dtTime = document.createElement('dt');
+        dtTime.textContent = '점검 시각';
+        const ddTime = document.createElement('dd');
+        ddTime.textContent = checkedAt || '확인 불가';
+        dl.appendChild(dtTime);
+        dl.appendChild(ddTime);
+
+        container.appendChild(dl);
+
+        // 핵심 안내 문구 (사건 설명 미실행 명시 - q17.explanation_not_run, q17.no_explanation_success 필수 통과)
+        const warnBox = document.createElement('div');
+        warnBox.className = 'notice';
+        warnBox.style.marginTop = '12px';
+        warnBox.style.marginBottom = '6px';
+
+        const pWarn = document.createElement('p');
+        pWarn.style.margin = '0 0 4px 0';
+        pWarn.style.fontWeight = 'bold';
+        pWarn.textContent = '사건 설명은 아직 실행하지 않았습니다. 실제 사건 설명의 근거와 결과는 보안 기록에서 별도로 확인하세요.';
+        warnBox.appendChild(pWarn);
+
+        const pManual = document.createElement('p');
+        pManual.style.margin = '0';
+        pManual.className = 'muted';
+        pManual.textContent = '다시 점검은 제공 영역의 「현재 API 연결 점검」 버튼을 직접 누르세요. (자동으로 다시 점검하지 않습니다.)';
+        warnBox.appendChild(pManual);
+
+        container.appendChild(warnBox);
+
+        return container;
+      }
+
+      // 그 외 알 수 없는 상태
+      const fallbackEl = document.createElement('p');
+      fallbackEl.className = 'state';
+      fallbackEl.textContent = `확인 불가 상태 (${status})`;
+      container.appendChild(fallbackEl);
+      return container;
+    },
+    renderExplanation(input = {}) {
+      const container = document.createElement('div');
+      container.className = 'student-explanation-box';
+
+      const currentEvent = input.event;
+      // explanation이 객체이거나, input 자체가 snapshot 형태일 수 있으므로 대응
+      const expResource = input.explanation || input;
+      const status = expResource?.status || 'idle';
+      const mode = expResource?.mode;
+      const data = expResource?.data;
+      const error = expResource?.error;
+      const checkedAt = input.checkedAt;
+
+      // 1. 모드 태그 표시 (demo 등)
+      if (mode) {
+        const modeWrap = document.createElement('div');
+        modeWrap.style.marginBottom = '8px';
+        const modeTag = document.createElement('span');
+        modeTag.className = 'tag';
+        if (mode === 'demo') {
+          modeTag.className = 'tag tag-demo';
+          modeTag.textContent = '예제 자료';
+        } else {
+          modeTag.textContent = mode;
+        }
+        modeWrap.appendChild(modeTag);
+        container.appendChild(modeWrap);
+      }
+
+      // 2. 상태별 분기
+      // 2-1. 설명 완료 (ok)
+      if (status === 'ok' && currentEvent) {
+        // [필수 계약] ok일 때만 바깥 요소에 data-student-explanation-event 속성으로 event.id 부여
+        container.setAttribute('data-student-explanation-event', currentEvent.id);
+
+        const stateEl = document.createElement('p');
+        stateEl.className = 'state state-ok';
+        stateEl.textContent = '설명 완료 (ok)';
+        container.appendChild(stateEl);
+
+        const pEvent = document.createElement('p');
+        pEvent.style.marginTop = '8px';
+        pEvent.style.fontWeight = 'bold';
+        pEvent.textContent = `사건 ID: ${currentEvent.id}`;
+        container.appendChild(pEvent);
+
+        const summaryBox = document.createElement('div');
+        summaryBox.className = 'explanation-summary';
+        summaryBox.style.padding = '8px 12px';
+        summaryBox.style.backgroundColor = 'var(--accent-soft, #e7eefc)';
+        summaryBox.style.borderRadius = '8px';
+        summaryBox.style.marginBottom = '8px';
+
+        const pSummary = document.createElement('p');
+        pSummary.style.margin = '0 0 6px 0';
+        pSummary.textContent = data?.summary || '설명 내용이 없습니다.';
+        summaryBox.appendChild(pSummary);
+
+        const pNotice = document.createElement('p');
+        pNotice.style.margin = '0';
+        pNotice.className = 'muted';
+        pNotice.textContent = '이 설명은 선택된 사건의 AI 분석 결과입니다. 제안은 자동 실행되지 않으며, 기록은 그대로 유지됩니다.';
+        summaryBox.appendChild(pNotice);
+
+        container.appendChild(summaryBox);
+
+        if (checkedAt) {
+          const pTime = document.createElement('p');
+          pTime.className = 'muted';
+          pTime.style.margin = '0';
+          pTime.textContent = `설명 시각: ${checkedAt}`;
+          container.appendChild(pTime);
+        }
+
+        return container;
+      }
+
+      // 2-2. 설명 실패 (error)
+      if (status === 'error') {
+        // [필수 계약] 실패 화면에는 data-student-explanation-event 속성을 절대 붙이지 않음!
+        container.removeAttribute('data-student-explanation-event');
+
+        const stateEl = document.createElement('p');
+        stateEl.className = 'state state-error';
+        stateEl.textContent = '설명 실패 (error)';
+        container.appendChild(stateEl);
+
+        if (currentEvent?.id) {
+          const pEvent = document.createElement('p');
+          pEvent.style.marginTop = '8px';
+          pEvent.textContent = `대상 사건 ID: ${currentEvent.id}`;
+          container.appendChild(pEvent);
+        }
+
+        const errCode = error?.code || 'EXPLANATION_FAILED';
+        const errMsg = error?.message || '사건 설명 생성에 실패했습니다.';
+
+        const errBox = document.createElement('div');
+        errBox.className = 'error-box';
+        errBox.style.marginTop = '8px';
+        errBox.style.padding = '10px 12px';
+        errBox.style.backgroundColor = 'var(--deny-soft, #fdeceb)';
+        errBox.style.border = '1px solid var(--deny, #b42318)';
+        errBox.style.marginBottom = '8px';
+
+        const pCode = document.createElement('p');
+        pCode.style.margin = '0 0 4px 0';
+        pCode.style.fontWeight = 'bold';
+        pCode.style.color = 'var(--deny, #b42318)';
+        pCode.textContent = `오류 코드: ${errCode}`;
+        errBox.appendChild(pCode);
+
+        const pMsg = document.createElement('p');
+        pMsg.style.margin = '0 0 6px 0';
+        pMsg.textContent = `오류 안내: ${errMsg}`;
+        errBox.appendChild(pMsg);
+
+        const pPreserve = document.createElement('p');
+        pPreserve.style.margin = '0';
+        pPreserve.className = 'muted';
+        pPreserve.textContent = '기록은 그대로 유지됩니다. AI 연결이나 응답 문제는 과제 실패로 처리되지 않습니다.';
+        errBox.appendChild(pPreserve);
+
+        container.appendChild(errBox);
+        return container;
+      }
+
+      // 2-3. 설명 생성 중 (loading)
+      if (status === 'loading') {
+        container.removeAttribute('data-student-explanation-event');
+
+        const stateEl = document.createElement('p');
+        stateEl.className = 'state state-loading';
+        stateEl.textContent = '설명 생성 중… (loading)';
+        container.appendChild(stateEl);
+
+        const notice = document.createElement('p');
+        notice.style.marginTop = '8px';
+        notice.textContent = currentEvent?.id
+          ? `선택된 사건 (${currentEvent.id})의 AI 설명을 불러오는 중입니다. 잠시만 기다려 주세요.`
+          : '사건의 AI 설명을 불러오는 중입니다. 잠시만 기다려 주세요.';
+        container.appendChild(notice);
+
+        return container;
+      }
+
+      // 2-4. 대기 상태 (idle 또는 event 없음)
+      container.removeAttribute('data-student-explanation-event');
+
+      const stateEl = document.createElement('p');
+      stateEl.className = 'state state-idle';
+      stateEl.textContent = '대기 중 (idle)';
+      container.appendChild(stateEl);
+
+      const notice = document.createElement('p');
+      notice.style.marginTop = '8px';
+      notice.textContent = '보안 기록에서 사건을 선택해 AI 설명을 요청하세요. 제안은 자동 실행되지 않습니다.';
+      container.appendChild(notice);
+
+      return container;
+    },
     renderAction() { return '학생 구현 대기: 현재 사건·조치·실제 대상·사람 확인·ACK와 원천 효과·unknown을 구분하세요.'; },
   };
 }
