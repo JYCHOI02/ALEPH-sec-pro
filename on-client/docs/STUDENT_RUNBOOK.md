@@ -169,9 +169,9 @@ graph TD
     end
 
     UI -- "1. HTTP API 요청" --> HTTP
-    HTTP -- "GET /api/identity, /apps, /access, /events" --> EngineModule
-    HTTP -- "POST /api/actions/* (prepare, execute, refresh)" --> ActionService
-    HTTP -- "GET /api/ai/*, POST /api/explanation" --> AIService
+    HTTP -- "GET /api/me, /api/apps, /api/events, POST /api/access" --> EngineModule
+    HTTP -- "POST /api/actions/* (prepare, execute, result)" --> ActionService
+    HTTP -- "GET /api/ai/*, POST /api/ai/explain" --> AIService
     HTTP -- "GET /api/vulnerabilities" --> OSVScanner
 ```
 
@@ -218,8 +218,8 @@ graph TD
 
 | 화면에 표시되는 실제 문구 | 발생 원인 | 학생이 실제로 확인할 수 있는 점검 및 복구 절차 |
 |---|---|---|
-| **`연결 실패: ...` / `연결 없음`** | 로컬 서버 미기동 또는 백엔드 연결 두절 | 1. 브라우저 개발자 도구(<kbd>F12</kbd>)의 **Network 탭**에서 `/api/identity` 요청 실패 여부 확인<br/>2. PowerShell 터미널에서 `npm.cmd run demo` 재실행<br/>3. 브라우저 새로고침(<kbd>F5</kbd>) |
-| **`확인 불가 (unknown)`** | 응답 데이터의 상태값이 비정상적이거나 필수 계약 미충족 | 1. 화면에 표시된 상태 코드 확인<br/>2. **「도움정보」 탭의 `[진단 정보 복사]` 버튼**을 눌러 클립보드에 복사된 JSON 진단 메타데이터 확인<br/>3. Network 탭에서 해당 API의 응답 본문(`{ ok: false, error: { code, message } }`) 확인 |
+| **`연결 실패: ...` / `연결 없음`** | 로컬 서버 미기동 또는 백엔드 연결 두절 | 1. 브라우저 개발자 도구(<kbd>F12</kbd>)의 **Network 탭**에서 `/api/me` 요청 실패 여부 및 응답 본문 확인<br/>2. 로컬 서버 프로세스 실행 여부 확인 및 기본 서버(`npm.cmd start` 또는 `node src/server.mjs`) 재기동<br/>*(주의: `npm.cmd run demo`는 예제 자료를 확인하는 테스트 모드일 뿐이며 실제 연결 실패의 복구 절차가 아닙니다)*<br/>3. 브라우저 새로고침(<kbd>F5</kbd>) |
+| **`확인 불가 (unknown)`** | 응답 데이터의 상태값이 비정상적이거나 필수 계약 미충족 | 1. 화면에 표시된 상태 코드 확인<br/>2. 제공 영역의 **`[도움정보 불러오기]`** 클릭 후 **`[확인했으며 복사합니다]`**를 누르거나, 학생 상태 영역의 **`[도움정보 복사]`** 버튼을 눌러 클립보드에 복사된 JSON 진단 메타데이터 확인<br/>3. Network 탭에서 해당 API의 응답 본문(`{ ok: false, error: { code, message } }`) 확인 |
 | **`전체 조회 상태: 조회 준비 미완료 (not_configured)`** | 프로젝트 대상 경로 설정 누락 또는 준비 중 상태 | 1. 화면의 상태 코드 `PROJECT_NOT_CONFIGURED` 확인<br/>2. 정상적인 초기 설정 대기 상태임을 인지 (오류나 취약점 없음이 아님) |
 | **`전체 조회 상태: 아직 조회 안 함 (not_checked)`** | 승인된 공개 패키지가 없거나 아직 조회를 실행하지 않음 | 1. 화면의 상태 코드 `NO_APPROVED_PACKAGES` 확인<br/>2. 제공 영역의 `[설치 패키지 조회]` 버튼을 눌러 새 요청 전송 |
 | **`전체 조회 상태: lock 파일 확인 불가 (unverifiable)`** | 루트에 `package-lock.json`이 없거나 잠금 파일 형식이 손상됨 | 1. 화면의 상태 코드 `LOCKFILE_UNVERIFIABLE` 확인<br/>2. 프로젝트 루트에 유효한 `package-lock.json`(버전 2 또는 3)이 존재하는지 확인 |
@@ -264,4 +264,6 @@ graph TD
 | **보안 기록** | 원천 조치 (제공) | **`[실행 승인]`** | `id="action-execute"` | 사람 확인 후 서버 전달 (**확인 완료**) |
 | **보안 기록** | 원천 조치 (제공) | **`[원천 결과만 재조회]`** | `id="action-refresh"` | 결과 불명 시 재조회 트리거 (**확인 완료**) |
 | **보안 기록** | 학생 조치 상태 (학생) | 조치 식별 속성 (버튼 미생성) | `data-student-action-event`<br/>`data-student-action-request` | `effectApplied === true` 관측 검증 (**확인 완료**) |
-| **도움정보** | 통합 보안 상태 및 진단 (학생) | **`[진단 정보 복사]`** | `button` (`copyBtn`) | 진단 텍스트 클립보드 복사 (**확인 완료**) |
+| **도움정보** | 도움정보 (제공) | **`[도움정보 불러오기]`** | `id="diag-load"` | 서버 연결 점검 결과 로드 (**확인 완료**) |
+| **도움정보** | 도움정보 (제공) | **`[확인했으며 복사합니다]`** | `id="diag-copy"` | 로드된 진단 정보를 확인 후 클립보드 복사 (**확인 완료**) |
+| **도움정보** | 통합 보안 상태 및 진단 (학생) | **`[도움정보 복사]`** | `button` (`copyBtn`) | 학생 상태·알림 영역의 진단 메타데이터 클립보드 복사 (**확인 완료**) |
