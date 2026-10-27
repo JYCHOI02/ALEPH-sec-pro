@@ -1686,6 +1686,196 @@ export function createStudentView() {
 
       return container;
     },
-    renderAction() { return '학생 구현 대기: 현재 사건·조치·실제 대상·사람 확인·ACK와 원천 효과·unknown을 구분하세요.'; },
+    renderAction(input = {}) {
+      const container = document.createElement('div');
+      container.className = 'student-action-box';
+
+      const status = input?.status || 'idle';
+      const event = input?.event || null;
+      const actionId = input?.actionId || null;
+      const target = input?.target || null;
+      const receipt = input?.receipt || null;
+      const observation = input?.observation || null;
+      const message = input?.message || null;
+      const confirmationExpiresAt = input?.confirmationExpiresAt || null;
+      const error = input?.error || null;
+
+      // 1. data-* 속성 부여 (있는 것만 부여, 실패/대기/미존재 시 제거)
+      if (event?.id) {
+        container.setAttribute('data-student-action-event', event.id);
+      } else {
+        container.removeAttribute('data-student-action-event');
+      }
+
+      if (receipt?.requestId) {
+        container.setAttribute('data-student-action-request', receipt.requestId);
+      } else {
+        container.removeAttribute('data-student-action-request');
+      }
+
+      // 2. 상태(status) 판별 및 라벨링
+      // [핵심 계약] succeeded 상태라도 observation.effectApplied가 true가 아니면 효과 확인이 아니므로 결과 불명(unknown)으로 처리
+      let effectiveStatus = status;
+      if (status === 'succeeded' && observation?.effectApplied !== true) {
+        effectiveStatus = 'unknown';
+      }
+
+      const stateEl = document.createElement('p');
+      stateEl.className = `state state-${effectiveStatus}`;
+
+      const statusLabels = {
+        idle: '아직 미실행 (idle)',
+        loading: '조치 준비 또는 결과 조회 중… (loading) · 완료 아님',
+        prepared: '준비됨·미실행 (prepared)',
+        executing: '서버에 전달 중 (executing) · 결과 아직 없음',
+        pending: '서버 접수·처리 중 (pending) · 서버 접수(ACK)는 완료나 효과가 아님',
+        succeeded: '효과 확인 (succeeded)',
+        denied: '원천 거절 (denied)',
+        failed: '원천 실패 (failed)',
+        unknown: '결과 불명 (unknown) · 효과 없음이나 성공으로 판단 금지',
+        expired: '확인 기한 지남 (expired) · 다시 준비 필요',
+        error: '요청 미처리 (error)',
+      };
+
+      stateEl.textContent = statusLabels[effectiveStatus] || `상태 확인 불가 (${effectiveStatus})`;
+      container.appendChild(stateEl);
+
+      // 3. 상태별 상세 안내 박스
+      const infoBox = document.createElement('div');
+      infoBox.className = 'action-info-box';
+      infoBox.style.marginTop = '8px';
+      infoBox.style.padding = '10px 12px';
+      infoBox.style.borderRadius = '6px';
+      infoBox.style.backgroundColor = 'var(--panel-bg, #f8f9fa)';
+      infoBox.style.border = '1px solid var(--border-color, #e4e7ec)';
+
+      // 상태별 설명 문구
+      const pDesc = document.createElement('p');
+      pDesc.style.margin = '0 0 8px 0';
+      pDesc.style.fontWeight = 'bold';
+
+      if (effectiveStatus === 'idle') {
+        pDesc.textContent = message || '조치 제안은 아직 실행되지 않았습니다. 현재 사건의 AI 제안에서 조치를 준비하세요.';
+      } else if (effectiveStatus === 'loading') {
+        pDesc.textContent = '원천 시스템에 조치를 준비하거나 실행 결과를 재조회하는 중입니다. 아직 완료되지 않았습니다.';
+      } else if (effectiveStatus === 'prepared') {
+        pDesc.textContent = '조치가 준비되었으나 아직 실행되지 않았습니다(미실행). 사람 확인 기한 내에 대상을 확인하고 제공 화면의 「대상과 조치를 확인했으며 집행합니다」 버튼을 직접 누르세요.';
+      } else if (effectiveStatus === 'executing') {
+        pDesc.textContent = '사람 확인을 거쳐 원천 시스템에 전달 중입니다. 결과가 아직 확인되지 않았으므로 완료나 성공이 아닙니다.';
+      } else if (effectiveStatus === 'pending') {
+        pDesc.textContent = '서버가 요청을 접수하여 처리 중(pending)입니다. 접수 확인(ACK)은 실제 조치 효과가 반영된 것이 아니며, 결과는 별도로 확인해야 합니다.';
+      } else if (effectiveStatus === 'succeeded') {
+        pDesc.style.color = 'var(--allow, #027a48)';
+        pDesc.textContent = '원천 시스템에서 실제 조치 효과가 관측되었습니다(effectApplied: true).';
+      } else if (effectiveStatus === 'denied') {
+        pDesc.style.color = 'var(--deny, #b42318)';
+        pDesc.textContent = message ? `원천 시스템 거절: ${message}` : '원천 정책에 의해 조치 요청이 거절되었습니다.';
+      } else if (effectiveStatus === 'failed') {
+        pDesc.style.color = 'var(--deny, #b42318)';
+        pDesc.textContent = message ? `원천 시스템 실패: ${message}` : '원천 시스템 처리 중 실패가 발생했습니다.';
+      } else if (effectiveStatus === 'unknown') {
+        pDesc.style.color = 'var(--warn, #b54708)';
+        pDesc.textContent = '결과를 알 수 없습니다(unknown). 조치 효과가 없거나 이미 성공했다고 단정하지 마시고, 제공 화면의 「원천 결과만 재조회」 버튼을 눌러 결과만 직접 다시 확인하세요.';
+      } else if (effectiveStatus === 'expired') {
+        pDesc.style.color = 'var(--deny, #b42318)';
+        pDesc.textContent = '사람 확인 기한이 지났습니다(expired). 이번 준비 정보로는 집행할 수 없으므로 사건에서 조치를 다시 준비하세요.';
+      } else if (effectiveStatus === 'error') {
+        pDesc.style.color = 'var(--deny, #b42318)';
+        pDesc.textContent = '조치 요청이 정상적으로 처리되지 않았습니다. 오류 원인을 확인하세요.';
+      }
+      infoBox.appendChild(pDesc);
+
+      // 4. 에러 정보 표시 (code & message)
+      if (error) {
+        const errP = document.createElement('p');
+        errP.style.margin = '0 0 6px 0';
+        errP.style.color = 'var(--deny, #b42318)';
+        errP.textContent = `오류 코드: ${error.code || 'UNKNOWN'} — ${error.message || '상세 오류 내용 없음'}`;
+        infoBox.appendChild(errP);
+      }
+
+      // 5. 사건·조치·대상·영수증·관측 정보 상세 나열 (받은 범위에서 표시)
+      const detailList = document.createElement('ul');
+      detailList.style.margin = '0';
+      detailList.style.paddingLeft = '20px';
+      detailList.style.fontSize = '0.9em';
+
+      if (event?.id) {
+        const li = document.createElement('li');
+        li.textContent = `사건 ID: ${event.id}`;
+        detailList.appendChild(li);
+      }
+
+      if (event?.evidence && Array.isArray(event.evidence) && event.evidence.length > 0) {
+        const li = document.createElement('li');
+        li.textContent = `근거 ID: ${event.evidence.map((e) => e.id).join(', ')}`;
+        detailList.appendChild(li);
+      }
+
+      if (actionId) {
+        const li = document.createElement('li');
+        li.textContent = `조치(Action): ${actionId}`;
+        detailList.appendChild(li);
+      }
+
+      if (target?.id) {
+        const li = document.createElement('li');
+        li.textContent = `실제 대상: ${target.id}${target.generation ? ` (세대: ${target.generation})` : ''}`;
+        detailList.appendChild(li);
+      }
+
+      if (confirmationExpiresAt) {
+        const li = document.createElement('li');
+        li.textContent = `사람 확인 기한: ${confirmationExpiresAt}`;
+        detailList.appendChild(li);
+      }
+
+      if (receipt?.requestId) {
+        const li = document.createElement('li');
+        li.textContent = `요청 ID(requestId): ${receipt.requestId}`;
+        detailList.appendChild(li);
+      }
+
+      if (receipt?.receiptId) {
+        const li = document.createElement('li');
+        li.textContent = `영수증 ID(receiptId): ${receipt.receiptId}`;
+        detailList.appendChild(li);
+      }
+
+      if (receipt?.version) {
+        const li = document.createElement('li');
+        li.textContent = `버전(version): ${receipt.version}`;
+        detailList.appendChild(li);
+      }
+
+      if (receipt?.superseded) {
+        const li = document.createElement('li');
+        li.style.color = 'var(--warn, #b54708)';
+        li.textContent = '이전 조회는 최신 결과를 대신하지 않습니다 (superseded).';
+        detailList.appendChild(li);
+      }
+
+      if (observation?.observedAt) {
+        const li = document.createElement('li');
+        li.textContent = `관측 시각: ${observation.observedAt} (effectApplied: ${String(observation.effectApplied)})`;
+        detailList.appendChild(li);
+      }
+
+      if (detailList.children.length > 0) {
+        infoBox.appendChild(detailList);
+      }
+
+      container.appendChild(infoBox);
+
+      // 6. 집행 버튼 미생성 및 안내 (사람 확인 필수 원칙)
+      const pNotice = document.createElement('p');
+      pNotice.className = 'muted';
+      pNotice.style.marginTop = '8px';
+      pNotice.style.fontSize = '0.85em';
+      pNotice.textContent = '이 화면은 조치 상태 안내용이며 조치 실행 버튼을 생성하지 않습니다. 실제 조치 집행 및 결과 재조회는 제공 영역의 버튼을 통해 진행됩니다.';
+      container.appendChild(pNotice);
+
+      return container;
+    },
   };
 }
