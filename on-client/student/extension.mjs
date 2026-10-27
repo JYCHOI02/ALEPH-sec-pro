@@ -1266,15 +1266,16 @@ export function createStudentView() {
     renderExplanation(input = {}) {
       const container = document.createElement('div');
       container.className = 'student-explanation-box';
+      container.removeAttribute('data-student-explanation-event');
 
-      const currentEvent = input.event;
+      const currentEvent = input?.event || null;
       // explanation이 객체이거나, input 자체가 snapshot 형태일 수 있으므로 대응
-      const expResource = input.explanation || input;
+      const expResource = input?.explanation || input || {};
       const status = expResource?.status || 'idle';
       const mode = expResource?.mode;
       const data = expResource?.data;
       const error = expResource?.error;
-      const checkedAt = input.checkedAt;
+      const checkedAt = input?.checkedAt || expResource?.meta?.checkedAt || null;
 
       // 1. 모드 태그 표시 (demo 등)
       if (mode) {
@@ -1292,57 +1293,8 @@ export function createStudentView() {
         container.appendChild(modeWrap);
       }
 
-      // 2. 상태별 분기
-      // 2-1. 설명 완료 (ok)
-      if (status === 'ok' && currentEvent) {
-        // [필수 계약] ok일 때만 바깥 요소에 data-student-explanation-event 속성으로 event.id 부여
-        container.setAttribute('data-student-explanation-event', currentEvent.id);
-
-        const stateEl = document.createElement('p');
-        stateEl.className = 'state state-ok';
-        stateEl.textContent = '설명 완료 (ok)';
-        container.appendChild(stateEl);
-
-        const pEvent = document.createElement('p');
-        pEvent.style.marginTop = '8px';
-        pEvent.style.fontWeight = 'bold';
-        pEvent.textContent = `사건 ID: ${currentEvent.id}`;
-        container.appendChild(pEvent);
-
-        const summaryBox = document.createElement('div');
-        summaryBox.className = 'explanation-summary';
-        summaryBox.style.padding = '8px 12px';
-        summaryBox.style.backgroundColor = 'var(--accent-soft, #e7eefc)';
-        summaryBox.style.borderRadius = '8px';
-        summaryBox.style.marginBottom = '8px';
-
-        const pSummary = document.createElement('p');
-        pSummary.style.margin = '0 0 6px 0';
-        pSummary.textContent = data?.summary || '설명 내용이 없습니다.';
-        summaryBox.appendChild(pSummary);
-
-        const pNotice = document.createElement('p');
-        pNotice.style.margin = '0';
-        pNotice.className = 'muted';
-        pNotice.textContent = '이 설명은 선택된 사건의 AI 분석 결과입니다. 제안은 자동 실행되지 않으며, 기록은 그대로 유지됩니다.';
-        summaryBox.appendChild(pNotice);
-
-        container.appendChild(summaryBox);
-
-        if (checkedAt) {
-          const pTime = document.createElement('p');
-          pTime.className = 'muted';
-          pTime.style.margin = '0';
-          pTime.textContent = `설명 시각: ${checkedAt}`;
-          container.appendChild(pTime);
-        }
-
-        return container;
-      }
-
-      // 2-2. 설명 실패 (error)
+      // 2. 에러 상태 (error) - event가 null이어도 안전하게 표시
       if (status === 'error') {
-        // [필수 계약] 실패 화면에는 data-student-explanation-event 속성을 절대 붙이지 않음!
         container.removeAttribute('data-student-explanation-event');
 
         const stateEl = document.createElement('p');
@@ -1353,6 +1305,7 @@ export function createStudentView() {
         if (currentEvent?.id) {
           const pEvent = document.createElement('p');
           pEvent.style.marginTop = '8px';
+          pEvent.style.fontWeight = 'bold';
           pEvent.textContent = `대상 사건 ID: ${currentEvent.id}`;
           container.appendChild(pEvent);
         }
@@ -1366,6 +1319,7 @@ export function createStudentView() {
         errBox.style.padding = '10px 12px';
         errBox.style.backgroundColor = 'var(--deny-soft, #fdeceb)';
         errBox.style.border = '1px solid var(--deny, #b42318)';
+        errBox.style.borderRadius = '6px';
         errBox.style.marginBottom = '8px';
 
         const pCode = document.createElement('p');
@@ -1377,8 +1331,16 @@ export function createStudentView() {
 
         const pMsg = document.createElement('p');
         pMsg.style.margin = '0 0 6px 0';
-        pMsg.textContent = `오류 안내: ${errMsg}`;
+        pMsg.textContent = `AI 설명 실패: ${errMsg}`;
         errBox.appendChild(pMsg);
+
+        if (errCode === 'ON_AI_INVALID_OUTPUT' || data?.executed === true) {
+          const pExecuted = document.createElement('p');
+          pExecuted.style.margin = '0 0 6px 0';
+          pExecuted.style.color = 'var(--deny, #b42318)';
+          pExecuted.textContent = 'AI가 이미 실행했다고 답했거나 근거가 맞지 않는 설명은 쓸 수 없습니다.';
+          errBox.appendChild(pExecuted);
+        }
 
         const pPreserve = document.createElement('p');
         pPreserve.style.margin = '0';
@@ -1390,7 +1352,7 @@ export function createStudentView() {
         return container;
       }
 
-      // 2-3. 설명 생성 중 (loading)
+      // 3. 로딩 상태 (loading)
       if (status === 'loading') {
         container.removeAttribute('data-student-explanation-event');
 
@@ -1409,7 +1371,307 @@ export function createStudentView() {
         return container;
       }
 
-      // 2-4. 대기 상태 (idle 또는 event 없음)
+      // 4. 사건 선택 대기 (event가 null인 경우)
+      if (!currentEvent) {
+        container.removeAttribute('data-student-explanation-event');
+
+        const stateEl = document.createElement('p');
+        stateEl.className = 'state state-idle';
+        stateEl.textContent = '대기 중 (idle)';
+        container.appendChild(stateEl);
+
+        const notice = document.createElement('p');
+        notice.style.marginTop = '8px';
+        notice.textContent = '보안 기록에서 기록을 먼저 고르세요. 사건을 선택해야 AI 설명을 요청할 수 있습니다.';
+        container.appendChild(notice);
+
+        return container;
+      }
+
+      // 5. 설명 완료 상태 (ok) 검증 및 렌더링
+      if (status === 'ok') {
+        const eventEvidence = Array.isArray(currentEvent.evidence) ? currentEvent.evidence : [];
+
+        // 5-1. 검증: 근거 부족 검사
+        if (eventEvidence.length === 0) {
+          container.removeAttribute('data-student-explanation-event');
+
+          const stateEl = document.createElement('p');
+          stateEl.className = 'state state-error';
+          stateEl.textContent = '설명 거부 (error)';
+          container.appendChild(stateEl);
+
+          const warnBox = document.createElement('div');
+          warnBox.className = 'error-box';
+          warnBox.style.marginTop = '8px';
+          warnBox.style.padding = '10px 12px';
+          warnBox.style.backgroundColor = 'var(--deny-soft, #fdeceb)';
+          warnBox.style.border = '1px solid var(--deny, #b42318)';
+          warnBox.style.borderRadius = '6px';
+
+          const pMsg = document.createElement('p');
+          pMsg.style.margin = '0 0 6px 0';
+          pMsg.style.fontWeight = 'bold';
+          pMsg.style.color = 'var(--deny, #b42318)';
+          pMsg.textContent = '근거 부족으로 설명을 처리할 수 없습니다(근거 부족·입력 오류). 사건에 확인된 근거가 없습니다.';
+          warnBox.appendChild(pMsg);
+
+          const pPreserve = document.createElement('p');
+          pPreserve.style.margin = '0';
+          pPreserve.className = 'muted';
+          pPreserve.textContent = '기록은 그대로 유지됩니다.';
+          warnBox.appendChild(pPreserve);
+
+          container.appendChild(warnBox);
+          return container;
+        }
+
+        // 5-2. 검증: 이미 실행했다고 주장하는 거짓 설명 거부 (executed: true)
+        if (data?.executed === true) {
+          container.removeAttribute('data-student-explanation-event');
+
+          const stateEl = document.createElement('p');
+          stateEl.className = 'state state-error';
+          stateEl.textContent = '설명 거부 (error)';
+          container.appendChild(stateEl);
+
+          const warnBox = document.createElement('div');
+          warnBox.className = 'error-box';
+          warnBox.style.marginTop = '8px';
+          warnBox.style.padding = '10px 12px';
+          warnBox.style.backgroundColor = 'var(--deny-soft, #fdeceb)';
+          warnBox.style.border = '1px solid var(--deny, #b42318)';
+          warnBox.style.borderRadius = '6px';
+
+          const pMsg = document.createElement('p');
+          pMsg.style.margin = '0 0 6px 0';
+          pMsg.style.fontWeight = 'bold';
+          pMsg.style.color = 'var(--deny, #b42318)';
+          pMsg.textContent = 'AI가 이미 실행했다고 답한 설명은 쓸 수 없습니다. 제안은 자동 실행되지 않으며 사람 확인이 필요합니다.';
+          warnBox.appendChild(pMsg);
+
+          const pPreserve = document.createElement('p');
+          pPreserve.style.margin = '0';
+          pPreserve.className = 'muted';
+          pPreserve.textContent = '기록은 그대로 유지됩니다.';
+          warnBox.appendChild(pPreserve);
+
+          container.appendChild(warnBox);
+          return container;
+        }
+
+        // 5-3. 검증: 근거 ID 불일치 검사
+        const evidenceMap = new Map(eventEvidence.map((e) => [e.id, e.text]));
+        const citedEvidenceIds = Array.isArray(data?.evidenceIds) ? data.evidenceIds : [];
+        const hasInvalidRef = citedEvidenceIds.some((id) => !evidenceMap.has(id));
+
+        if (hasInvalidRef) {
+          container.removeAttribute('data-student-explanation-event');
+
+          const stateEl = document.createElement('p');
+          stateEl.className = 'state state-error';
+          stateEl.textContent = '설명 거부 (error)';
+          container.appendChild(stateEl);
+
+          const warnBox = document.createElement('div');
+          warnBox.className = 'error-box';
+          warnBox.style.marginTop = '8px';
+          warnBox.style.padding = '10px 12px';
+          warnBox.style.backgroundColor = 'var(--deny-soft, #fdeceb)';
+          warnBox.style.border = '1px solid var(--deny, #b42318)';
+          warnBox.style.borderRadius = '6px';
+
+          const pMsg = document.createElement('p');
+          pMsg.style.margin = '0 0 6px 0';
+          pMsg.style.fontWeight = 'bold';
+          pMsg.style.color = 'var(--deny, #b42318)';
+          pMsg.textContent = '근거 불일치: AI 설명의 근거 ID가 사건 기록과 일치하지 않아 해당 설명을 쓸 수 없습니다.';
+          warnBox.appendChild(pMsg);
+
+          const pPreserve = document.createElement('p');
+          pPreserve.style.margin = '0';
+          pPreserve.className = 'muted';
+          pPreserve.textContent = '기록은 그대로 유지됩니다.';
+          warnBox.appendChild(pPreserve);
+
+          container.appendChild(warnBox);
+          return container;
+        }
+
+        // [필수 계약] 모든 검증 통과 성공 시에만 data-student-explanation-event 속성 부여
+        container.setAttribute('data-student-explanation-event', currentEvent.id);
+
+        const stateEl = document.createElement('p');
+        stateEl.className = 'state state-ok';
+        stateEl.textContent = '설명 완료 (ok)';
+        container.appendChild(stateEl);
+
+        const titleEl = document.createElement('h4');
+        titleEl.style.marginTop = '8px';
+        titleEl.style.marginBottom = '4px';
+        titleEl.textContent = 'AI 설명 (참고용)';
+        container.appendChild(titleEl);
+
+        const pEventId = document.createElement('p');
+        pEventId.style.margin = '0 0 8px 0';
+        pEventId.style.fontWeight = 'bold';
+        pEventId.textContent = `사건 ID: ${currentEvent.id}`;
+        container.appendChild(pEventId);
+
+        // 1) 요약 본문
+        const summaryBox = document.createElement('div');
+        summaryBox.className = 'explanation-summary';
+        summaryBox.style.padding = '10px 12px';
+        summaryBox.style.backgroundColor = 'var(--accent-soft, #e7eefc)';
+        summaryBox.style.borderRadius = '8px';
+        summaryBox.style.marginBottom = '12px';
+
+        const pSummary = document.createElement('p');
+        pSummary.style.margin = '0 0 6px 0';
+        pSummary.style.lineHeight = '1.5';
+        pSummary.textContent = data?.summary || '설명 내용이 없습니다.';
+        summaryBox.appendChild(pSummary);
+
+        const pNotice = document.createElement('p');
+        pNotice.style.margin = '0';
+        pNotice.className = 'muted';
+        pNotice.textContent = '이 설명은 선택된 사건의 AI 분석 결과(참고용)입니다. 제안은 자동 실행되지 않으며, 기록은 그대로 유지됩니다.';
+        summaryBox.appendChild(pNotice);
+
+        container.appendChild(summaryBox);
+
+        // 2) 인용한 근거 ID 및 본문 ("근거 ID — 근거 글")
+        const hEvidence = document.createElement('h5');
+        hEvidence.style.margin = '10px 0 4px 0';
+        hEvidence.textContent = '인용한 근거';
+        container.appendChild(hEvidence);
+
+        const ulEvidence = document.createElement('ul');
+        ulEvidence.style.margin = '0 0 10px 0';
+        ulEvidence.style.paddingLeft = '20px';
+
+        const displayEvidenceIds = citedEvidenceIds.length > 0 ? citedEvidenceIds : eventEvidence.map((e) => e.id);
+        for (const refId of displayEvidenceIds) {
+          const text = evidenceMap.get(refId) || '';
+          const li = document.createElement('li');
+          li.textContent = `${refId} — ${text}`;
+          ulEvidence.appendChild(li);
+        }
+        container.appendChild(ulEvidence);
+
+        // 3) 사건 규칙 ("규칙 ID — 규칙 글")
+        const hRules = document.createElement('h5');
+        hRules.style.margin = '10px 0 4px 0';
+        hRules.textContent = '적용 규칙';
+        container.appendChild(hRules);
+
+        const eventRules = Array.isArray(currentEvent.rules) ? currentEvent.rules : [];
+        if (eventRules.length === 0) {
+          const pNoRules = document.createElement('p');
+          pNoRules.className = 'muted';
+          pNoRules.style.margin = '0 0 10px 0';
+          pNoRules.textContent = '적용된 규칙 정보가 없습니다.';
+          container.appendChild(pNoRules);
+        } else {
+          const ulRules = document.createElement('ul');
+          ulRules.style.margin = '0 0 10px 0';
+          ulRules.style.paddingLeft = '20px';
+          for (const r of eventRules) {
+            const li = document.createElement('li');
+            li.textContent = `${r.id} — ${r.text}`;
+            ulRules.appendChild(li);
+          }
+          container.appendChild(ulRules);
+        }
+
+        // 4) 확인되지 않은 현재 상태 (unknown 항목 구분 표시)
+        const hState = document.createElement('h5');
+        hState.style.margin = '10px 0 4px 0';
+        hState.textContent = '확인되지 않은 현재 상태';
+        container.appendChild(hState);
+
+        const eventState = currentEvent.state || {};
+        const unknownItems = [];
+        if (eventState.access === 'unknown') {
+          unknownItems.push('접속: 확인 불가(unknown)');
+        }
+        if (eventState.session === 'unknown') {
+          unknownItems.push('세션: 확인 불가(unknown)');
+        }
+        if (eventState.device === 'unknown') {
+          unknownItems.push('기기: 확인 불가(unknown)');
+        }
+
+        if (unknownItems.length === 0) {
+          const pNoUnknown = document.createElement('p');
+          pNoUnknown.className = 'muted';
+          pNoUnknown.style.margin = '0 0 10px 0';
+          pNoUnknown.textContent = '없음';
+          container.appendChild(pNoUnknown);
+        } else {
+          const ulUnknown = document.createElement('ul');
+          ulUnknown.style.margin = '0 0 10px 0';
+          ulUnknown.style.paddingLeft = '20px';
+          for (const item of unknownItems) {
+            const li = document.createElement('li');
+            li.textContent = item;
+            ulUnknown.appendChild(li);
+          }
+          container.appendChild(ulUnknown);
+        }
+
+        // 5) 조치 제안 (supportedActions 미지원 / 제안 없음 / 사람 확인 필요 및 미실행)
+        const hProposals = document.createElement('h5');
+        hProposals.style.margin = '10px 0 4px 0';
+        hProposals.textContent = '조치 제안';
+        container.appendChild(hProposals);
+
+        const proposals = Array.isArray(data?.proposals) ? data.proposals : [];
+        const supportedActions = Array.isArray(currentEvent.supportedActions) ? currentEvent.supportedActions : [];
+
+        if (proposals.length === 0) {
+          const pNoProp = document.createElement('p');
+          pNoProp.className = 'muted';
+          pNoProp.style.margin = '0 0 10px 0';
+          if (supportedActions.length === 0) {
+            pNoProp.textContent = '원천이 지원하는 조치가 없어 제안이 없습니다 (정상). 연동 시스템이 지원하는 조치가 없습니다.';
+          } else {
+            pNoProp.textContent = 'AI가 제안한 조치가 없습니다.';
+          }
+          container.appendChild(pNoProp);
+        } else {
+          const ulProps = document.createElement('ul');
+          ulProps.style.margin = '0 0 6px 0';
+          ulProps.style.paddingLeft = '20px';
+          for (const p of proposals) {
+            const li = document.createElement('li');
+            li.textContent = `${p.action} — ${p.reason}`;
+            ulProps.appendChild(li);
+          }
+          container.appendChild(ulProps);
+
+          const pPropNotice = document.createElement('p');
+          pPropNotice.className = 'muted';
+          pPropNotice.style.margin = '0 0 10px 0';
+          pPropNotice.style.color = 'var(--text-muted, #475467)';
+          pPropNotice.textContent = '사람 확인이 필요하며 실행되지 않았습니다 (미실행). 자동 실행 버튼은 제공되지 않으며 실제 원천 조치는 승인 후 집행되어야 합니다.';
+          container.appendChild(pPropNotice);
+        }
+
+        // 6) 설명 시각
+        if (checkedAt) {
+          const pTime = document.createElement('p');
+          pTime.className = 'muted';
+          pTime.style.margin = '8px 0 0 0';
+          pTime.style.fontSize = '0.9em';
+          pTime.textContent = `설명 시각: ${checkedAt}`;
+          container.appendChild(pTime);
+        }
+
+        return container;
+      }
+
+      // 6. 기본 대기 상태 (idle)
       container.removeAttribute('data-student-explanation-event');
 
       const stateEl = document.createElement('p');
