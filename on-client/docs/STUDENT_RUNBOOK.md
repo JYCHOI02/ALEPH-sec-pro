@@ -136,13 +136,13 @@ node --check student/extension.mjs
 ```mermaid
 graph TD
     subgraph Browser ["1. 사용자 브라우저 (Web Client)"]
-        UI["제공 웹 UI (public/index.html · public/app.js)"]
+        UI["제공 웹 UI (public/index.html · public/app.js)<br/>요청 세대(generation) 관리 (loadAll 시 증가 및 지연 응답 무효화)"]
         StudentView["학생 확장 뷰 (student/extension.mjs)<br/>8대 렌더링 함수 (renderIdentity ~ renderVulnerabilities)"]
         UI <--> StudentView
     end
 
     subgraph ServerRouter ["2. 로컬 앱 서버 라우터 (src/server.mjs)"]
-        HTTP["HTTP API 라우터 (포트 127.0.0.1:5189)<br/>요청 세대(generation) 및 타임아웃 관리"]
+        HTTP["HTTP API 라우터 (포트 127.0.0.1:5189)<br/>HTTP 요청 라우팅 및 서버 타임아웃(requestTimeoutMs) 관리"]
     end
 
     subgraph CoreEngine ["3. 조회 및 접속 판정 엔진 (src/engine.mjs)"]
@@ -181,8 +181,8 @@ graph TD
 
 | 구성요소 | 실제 파일 경로 및 공개 주소 | 코드 기반 실제 역할 및 책임 | 보안 원칙 및 검증 기준 |
 |---|---|---|---|
-| **1. 사용자 브라우저<br/>(Web Client)** | • `public/index.html`<br/>• `public/app.js`<br/>• `student/extension.mjs`<br/>• 접속: `http://127.0.0.1:5189` | • 직원 화면 표시 (보호 현황, 업무 앱, 보안 기록, 도움정보)<br/>• 학생 8대 렌더링 함수에 데이터 바인딩 | • `textContent`만 사용하여 DOM XSS 원천 차단<br/>• 학생 영역에 임의의 조치 실행(POST) 버튼 미생성 |
-| **2. 로컬 앱 서버<br/>(HTTP 라우터)** | • `src/server.mjs`<br/>• 엔드포인트: `/api/*` | • HTTP 라우팅 및 오류 응답(`{ ok: false, error }`) 전송<br/>• 요청 세대(`generation`) 관리 및 이전 세대 응답 무효화 | • 서버 콘솔에 로그를 기록하지 않고 안전한 JSON 오류 반환<br/>• 토큰 및 비밀값 클라이언트 노출 차단 |
+| **1. 사용자 브라우저<br/>(Web Client)** | • `public/index.html`<br/>• `public/app.js`<br/>• `student/extension.mjs`<br/>• 접속: `http://127.0.0.1:5189` | • 직원 화면 표시 (보호 현황, 업무 앱, 보안 기록, 도움정보)<br/>• 학생 8대 렌더링 함수에 데이터 바인딩<br/>• **요청 세대(`generation`) 관리**: `public/app.js`의 `loadAll()` 실행 시 세대 번호(`++generation`)를 증가시켜 이전 세대의 지연 응답(GET, 판정, AI)이 최신 화면을 덮어쓰지 않도록 무효화 | • `textContent`만 사용하여 DOM XSS 원천 차단<br/>• 학생 영역에 임의의 조치 실행(POST) 버튼 미생성<br/>• 지연된 이전 세대 비동기 응답 폐기 |
+| **2. 로컬 앱 서버<br/>(HTTP 라우터)** | • `src/server.mjs`<br/>• 엔드포인트: `/api/*` | • HTTP 라우팅 및 오류 응답(`{ ok: false, error }`) 전송<br/>• **서버 타임아웃 관리**: `requestTimeoutMs`(15초) 및 `readTimeoutMs`(10초) 기반 `AbortController` 수명주기 관리 및 초과 시 `REQUEST_TIMEOUT` 반환 | • 서버 콘솔에 로그를 기록하지 않고 안전한 JSON 오류 반환<br/>• 토큰 및 비밀값 클라이언트 노출 차단<br/>• 시간 초과 시 내부 엔진 작업 즉시 중단 |
 | **3. 조회 및 판정 엔진<br/>(Core Engine)** | • `src/engine.mjs`<br/>• `student/engine-adapter.mjs` (제공 틀) | • 일반 사용자 계정/기기/세션 조회 (`readIdentity` 등)<br/>• 업무 앱 목록 조회 및 인가 판정 (`readApps`, `decideAccess`)<br/>• XDR 보안 사건 조회 (`readEvents`) | • 권한 없는 임의 로그인/기기 위조 방지<br/>• 미지원 조회를 빈 성공으로 왜곡하지 않음 |
 | **4. 원천 조치 모듈<br/>(Action Module)** | • `src/actions/sdp-action-engine.mjs`<br/>• `src/actions/service.mjs`<br/>• `src/actions/store.mjs` | • **조치(Action) 전용 모듈**: 격리/차단 조치 준비(`prepare`), 사람 확인 후 집행(`execute`), 영수증 보관<br/>• 실제 원천 효과(`observation.effectApplied`) 관측 | • **제안과 집행의 엄격한 분리**<br/>• 서버 접수(ACK)는 완료가 아니며 실제 효과 관측 시에만 성공 인정 |
 | **5. AI 및 취약점 연동<br/>(AI & OSV)** | • `src/ai/service.mjs`<br/>• `src/vulnerabilities/project-scan.mjs`<br/>• AI 엔드포인트: `POST /api/ai/explain`, `POST /api/ai/check`<br/>• OSV 엔드포인트: `GET /api/vulnerabilities`<br/>• 출처: `https://api.osv.dev/v1/querybatch` | • **AI 서비스**: AI 연결 점검(`POST /api/ai/check`) 및 보안 사건 근거 연결 AI 설명 생성(`POST /api/ai/explain`) — **모두 POST 방식으로 처리**<br/>• **취약점 스캐너**: `GET /api/vulnerabilities`로 `package-lock.json` 설치 버전과 OSV 취약점 DB 대조 | • AI API 호출 시 GET 방식 미사용 (서버는 POST만 허용)<br/>• 미조회(`not_checked`, `not_configured`) 및 실패를 "취약점 없음"으로 왜곡 차단<br/>• 비밀 API 키 하드코딩 금지 |
