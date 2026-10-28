@@ -7,10 +7,11 @@
 ## 1. 실행 환경 및 사전 준비
 
 ### 1) 지원 런타임 및 확인된 버전 (`support_scope_honest`)
-* **운영체제**: Microsoft Windows (Windows 10 / 11 64-bit)
+* **운영체제**: Microsoft Windows (Windows PowerShell 5.1+ 및 Node.js 22~24 실행 환경)
+  * *운영체제 범위 한정*: 현재 저장소의 소스 코드와 설정(`tools/start-alekov.ps1`, `package.json`)에는 특정 Windows 버전(Windows 10 vs 11)이나 아키텍처(64-bit 등)를 강제로 식별·제한하는 별도 판별 로직이 없습니다. 따라서 코드와 설정에 근거한 공식 지원 범위는 **'Node.js 22~24와 Windows PowerShell이 구동되는 Windows 환경'**으로 정직하게 표현을 한정합니다. 특정 Windows 버전(Windows 10 / 11 64-bit 등)의 개별 OS 빌드별 전수 호환성은 코드 레벨에서 독립 검증되지 않았으므로 기다림(UNV)으로 분류합니다.
 * **명령 셸**: Windows PowerShell (또는 PowerShell 7)
 * **공식 선언 버전**: **Node.js `24.19.0`** (`package.json`의 `engines`에 선언된 검증 기준 버전)
-* **실행 지원 범위**: **Node.js `22 ~ 24`** (원문 전달 도구 및 런처가 요구·지원하는 검증 범위)
+* **실행 지원 범위**: **Node.js `22 ~ 24`** (`tools/start-alekov.ps1` 런처의 버전 검사 로직 `22 <= major <= 24`이 요구·지원하는 검증 범위)
   * 버전 확인 명령: `node -v`
   * *주의: Node.js 20, 21 및 그 이하 버전은 호환성이 검증되지 않았으며 공식 지원 범위에 포함되지 않습니다.*
 * **외부 의존성**: **없음**
@@ -30,21 +31,21 @@
 * **실행 작업 폴더 (on-client)**: 프로젝트 최상위 바로 아래에 위치한 `on-client` 폴더
 
 ### 폴더 구조 및 제공/학생 경계 (`provided_student_boundary`)
-`.on-starter-manifest.json`의 원천 해시를 기준으로 구분됩니다:
+`.on-starter-manifest.json`의 원천 해시 및 학생 과제 범위를 기준으로 명확히 구분됩니다:
 
 ```text
 <프로젝트_저장소_최상위>/
 ├── .git/                                   # Git 저장소 메타데이터
 └── on-client/                              # 실제 클라이언트 프로젝트 루트 (실행 작업 위치)
-    ├── package.json                        # 실행 스크립트 (engines: 24.19.0)
-    ├── .env.example                        # 환경 변수 견본 (비밀값 없음)
-    ├── .on-starter-manifest.json           # 제공 코드 원천 해시 목록 (무결성 기준)
+    ├── package.json                        # [제공 설정] 실행 스크립트 (engines: 24.19.0)
+    ├── .env.example                        # [제공 설정] 환경 변수 견본 (비밀값 없음)
+    ├── .on-starter-manifest.json           # [제공 설정] 제공 코드 원천 해시 목록 (무결성 기준)
     │
     ├── student/                            # 학생 폴더
-    │   ├── extension.mjs                   # ★ [유일한 학생 작성 파일] 13~20단계 UI 렌더링 8대 함수 구현
-    │   └── engine-adapter.mjs              # [제공 파일] manifest에 해시가 등록된 제공 엔진 어댑터 틀
+    │   ├── extension.mjs                   # ★ [유일한 학생 작성 '코드' 파일] 13~20단계 UI 렌더링 8대 함수 구현
+    │   └── engine-adapter.mjs              # [제공 코드] manifest에 해시가 등록된 제공 엔진 어댑터 틀
     │
-    ├── src/                                # [제공 영역] 로컬 백엔드 서버
+    ├── src/                                # [제공 코드 영역] 로컬 백엔드 서버
     │   ├── server.mjs                      # HTTP 웹 서버 진입점 (포트 5189)
     │   ├── engine.mjs                      # 계정·기기·앱 접속 판정·사건 조회 엔진
     │   ├── actions/                        # 원천 보안 조치(Action: prepare/execute) 전용 서비스
@@ -55,17 +56,18 @@
     │   ├── connection/                     # 계정/기기 연결 관리자
     │   └── vulnerabilities/                # OSV 패키지 취약점 대조 서비스 (project-scan.mjs, osv.mjs)
     │
-    ├── public/                             # [제공 영역] 브라우저 웹 클라이언트 정적 자원
+    ├── public/                             # [제공 코드 영역] 브라우저 웹 클라이언트 정적 자원
     │   ├── index.html                      # 메인 화면 구조
     │   ├── app.js                          # UI 상태 관리 및 student/extension.mjs 렌더링 호출
     │   ├── style.css                       # 공통 스타일시트
     │   └── vulnerabilities-view.mjs        # 제공 패키지 조회 UI 모듈
     │
-    ├── docs/                               # 문서 폴더
-    │   ├── STUDENT_RUNBOOK.md              # [본 문서] 학생 실행 설명서
-    │   └── summary_md/                     # 단계별 요약 백업
-    ├── summary_md/                         # 단계별 작업 요약 문서
-    └── tools/                              # 실행 보조 스크립트 (start-alekov.ps1 등)
+    ├── docs/                               # 문서 폴더 (학생 작성 문서 및 제공 문서 공존)
+    │   ├── STUDENT_RUNBOOK.md              # ★ [학생 작성 문서] 21단계 공식 학생 실행 설명서 및 시스템 구성도
+    │   ├── summary_md/                     # [학생 작성 문서 사본] 단계별 요약 백업
+    │   └── (기타 .md, .json)               # [제공 문서] CURRICULUM.json, STUDENT_PROMPTS.md 등 제공 가이드
+    ├── summary_md/                         # ★ [학생 작성 문서] 13~21단계 작업 요약 문서 (STEP_*_SUMMARY.md)
+    └── tools/                              # [제공 도구 영역] 실행 보조 스크립트 (start-alekov.ps1 등)
 ```
 
 ---
@@ -162,7 +164,7 @@ graph TD
     end
 
     subgraph ExternalServices ["5. AI 게이트웨이 및 취약점 DB"]
-        AIService["AI 설명 서비스 (src/ai/service.mjs)"]
+        AIService["AI 설명 및 점검 서비스 (src/ai/service.mjs)"]
         OSVScanner["패키지 취약점 대조 (src/vulnerabilities/project-scan.mjs)"]
         OSVAPI["공개 OSV API<br/>https://api.osv.dev/v1/querybatch"]
         OSVScanner --> OSVAPI
@@ -171,7 +173,7 @@ graph TD
     UI -- "1. HTTP API 요청" --> HTTP
     HTTP -- "GET /api/me, /api/apps, /api/events, POST /api/access" --> EngineModule
     HTTP -- "POST /api/actions/* (prepare, execute, result)" --> ActionService
-    HTTP -- "GET /api/ai/*, POST /api/ai/explain" --> AIService
+    HTTP -- "POST /api/ai/explain, POST /api/ai/check (사건 설명 및 연결 점검)" --> AIService
     HTTP -- "GET /api/vulnerabilities" --> OSVScanner
 ```
 
@@ -183,32 +185,43 @@ graph TD
 | **2. 로컬 앱 서버<br/>(HTTP 라우터)** | • `src/server.mjs`<br/>• 엔드포인트: `/api/*` | • HTTP 라우팅 및 오류 응답(`{ ok: false, error }`) 전송<br/>• 요청 세대(`generation`) 관리 및 이전 세대 응답 무효화 | • 서버 콘솔에 로그를 기록하지 않고 안전한 JSON 오류 반환<br/>• 토큰 및 비밀값 클라이언트 노출 차단 |
 | **3. 조회 및 판정 엔진<br/>(Core Engine)** | • `src/engine.mjs`<br/>• `student/engine-adapter.mjs` (제공 틀) | • 일반 사용자 계정/기기/세션 조회 (`readIdentity` 등)<br/>• 업무 앱 목록 조회 및 인가 판정 (`readApps`, `decideAccess`)<br/>• XDR 보안 사건 조회 (`readEvents`) | • 권한 없는 임의 로그인/기기 위조 방지<br/>• 미지원 조회를 빈 성공으로 왜곡하지 않음 |
 | **4. 원천 조치 모듈<br/>(Action Module)** | • `src/actions/sdp-action-engine.mjs`<br/>• `src/actions/service.mjs`<br/>• `src/actions/store.mjs` | • **조치(Action) 전용 모듈**: 격리/차단 조치 준비(`prepare`), 사람 확인 후 집행(`execute`), 영수증 보관<br/>• 실제 원천 효과(`observation.effectApplied`) 관측 | • **제안과 집행의 엄격한 분리**<br/>• 서버 접수(ACK)는 완료가 아니며 실제 효과 관측 시에만 성공 인정 |
-| **5. AI 및 취약점 연동<br/>(AI & OSV)** | • `src/ai/service.mjs`<br/>• `src/vulnerabilities/project-scan.mjs`<br/>• 출처: `https://api.osv.dev/v1/querybatch` | • 보안 사건 근거 연결 AI 설명 생성<br/>• `package-lock.json` 설치 버전과 OSV 취약점 DB 대조 | • 미조회(`not_checked`) 및 실패를 "취약점 없음"으로 왜곡 차단<br/>• 비밀 API 키 하드코딩 금지 |
+| **5. AI 및 취약점 연동<br/>(AI & OSV)** | • `src/ai/service.mjs`<br/>• `src/vulnerabilities/project-scan.mjs`<br/>• AI 엔드포인트: `POST /api/ai/explain`, `POST /api/ai/check`<br/>• OSV 엔드포인트: `GET /api/vulnerabilities`<br/>• 출처: `https://api.osv.dev/v1/querybatch` | • **AI 서비스**: AI 연결 점검(`POST /api/ai/check`) 및 보안 사건 근거 연결 AI 설명 생성(`POST /api/ai/explain`) — **모두 POST 방식으로 처리**<br/>• **취약점 스캐너**: `GET /api/vulnerabilities`로 `package-lock.json` 설치 버전과 OSV 취약점 DB 대조 | • AI API 호출 시 GET 방식 미사용 (서버는 POST만 허용)<br/>• 미조회(`not_checked`, `not_configured`) 및 실패를 "취약점 없음"으로 왜곡 차단<br/>• 비밀 API 키 하드코딩 금지 |
 
 ---
 
-## 5. 제공 코드와 학생 구현 경계 (`provided_student_boundary`)
+## 5. 제공 코드·문서와 학생 작성 경계 (`provided_student_boundary`)
 
-`.on-starter-manifest.json` 해시 대조에 기반한 정확한 경계입니다:
+`.on-starter-manifest.json` 해시 대조 및 실제 작업 산출물을 기준으로 한 명확한 경계입니다:
 
-### 1) 학생 작성 파일: 오직 1개 파일만 해당
-* **`student/extension.mjs`**:
-  * 학생이 직접 구현하는 유일한 코드 파일입니다.
-  * 내부의 8대 함수:
-    1. `renderIdentity`: 계정, 기기 준수 상태, 세션 및 각 자료별 모드(`mode`) 보존 표시
-    2. `renderDecision`: 업무 앱 접속 판정 결과(`allow`/`deny`), 사유, 평가 시각 표시
-    3. `renderEvents`: XDR 탐지 보안 사건 및 근거 표시
-    4. `renderStatus`: 통합 상태 통지 및 진단 정보 복사 기능
-    5. `renderAiConnection`: AI 연결 상태, 모델명, 지연시간 및 네트워크 오류 분기
-    6. `renderExplanation`: 선택 사건 근거 연결 AI 설명 및 권한 상태 표시
-    7. `renderAction`: 11대 조치 상태 수명주기 및 엄격한 원천 효과(`effectApplied: true`) 검증
-    8. `renderVulnerabilities`: package-lock.json 설치 버전 대조, 취약점 ID 보존, 미조회 왜곡 차단
+### 1) 학생 작성 영역 (Student Scope)
+* **학생 작성 '코드' 파일 (유일한 실행 코드)**:
+  * **`student/extension.mjs`**:
+    * **학생이 직접 작성하는 유일한 소스 코드 파일(JavaScript 코드)**입니다.
+    * '유일한'이라는 수식은 오직 **실행 코드 파일**에만 한정되며, 학생이 작성하는 문서는 별도로 존재합니다.
+    * 내부의 8대 함수 구현:
+      1. `renderIdentity`: 계정, 기기 준수 상태, 세션 및 각 자료별 모드(`mode`) 보존 표시
+      2. `renderDecision`: 업무 앱 접속 판정 결과(`allow`/`deny`), 사유, 평가 시각 표시
+      3. `renderEvents`: XDR 탐지 보안 사건 및 근거 표시
+      4. `renderStatus`: 통합 상태 통지 및 진단 정보 복사 기능
+      5. `renderAiConnection`: AI 연결 상태, 모델명, 지연시간 및 네트워크 오류 분기
+      6. `renderExplanation`: 선택 사건 근거 연결 AI 설명 및 권한 상태 표시
+      7. `renderAction`: 11대 조치 상태 수명주기 및 엄격한 원천 효과(`effectApplied: true`) 검증
+      8. `renderVulnerabilities`: 패키지 잠금 대조 결과 표시, 취약점 ID 보존, 미조회 왜곡 차단
+* **학생 작성 '문서' 파일 (학생 작업 기록 및 실행 설명서)**:
+  * **`docs/STUDENT_RUNBOOK.md`**:
+    * 21단계 요구사항(설명서와 구성도)에 따라 학생이 직접 작성한 공식 실행 설명서(Runbook)입니다.
+  * **`summary_md/` 및 `docs/summary_md/`**:
+    * 13단계부터 21단계까지 각 단계별 구현 내역, 보안 원칙, 검증 결과 및 피드백 반영 사항을 정리한 학생 작성 요약 문서들 (`STEP_13_14_SUMMARY.md` ~ `STEP_21_SUMMARY.md`, `STEP_16_CHECKLIST.md`).
 
-### 2) 제공 파일 (학생이 수정하지 않는 원천 인프라)
-* **`student/engine-adapter.mjs`**: starter manifest에 해시가 등록된 제공 어댑터 틀입니다. (학생 작성 파일이 아님)
-* **서버 백엔드 (`src/`)**: `server.mjs`, `engine.mjs`, `actions/*`, `ai/*`, `connection/*`, `vulnerabilities/*`
-* **웹 클라이언트 (`public/`)**: `index.html`, `app.js`, `style.css`, `vulnerabilities-view.mjs`, `ai-connect.mjs`
-* **도구 및 문서 (`tools/`, `docs/`)**: `start-alekov.ps1`, `CURRICULUM.json`, `STUDENT_PROMPTS.md` 등
+### 2) 제공 영역 (Provided Scope - 학생이 수정하지 않는 원천 파일)
+* **제공 소스 코드 및 설정 (원천 인프라)**:
+  * **`student/engine-adapter.mjs`**: `.on-starter-manifest.json`에 원본 해시가 등록된 제공 어댑터 틀입니다 (학생 작성 코드가 아님).
+  * **서버 백엔드 (`src/`)**: `server.mjs`, `engine.mjs`, `actions/*`, `ai/*`, `connection/*`, `vulnerabilities/*`
+  * **웹 클라이언트 (`public/`)**: `index.html`, `app.js`, `style.css`, `vulnerabilities-view.mjs`, `ai-connect.mjs`
+  * **실행 도구 (`tools/`)**: `start-alekov.ps1` 등
+  * **프로젝트 설정 파일**: `package.json`, `.env.example`, `.on-starter-manifest.json`
+* **제공 문서 (수업 가이드 및 원천 계약 안내서)**:
+  * **`docs/` 내 제공 문서**: `GETTING_STARTED_STUDENT.md`, `STUDENT_LAUNCH_GUIDE.md`, `CURRICULUM.json`, `STUDENT_PROMPTS.md`, `IMPLEMENTATION_CONTRACT.md`, `CONNECTION_TROUBLESHOOT.md`, `FINAL_PRODUCT_GUIDE.md`, `PRODUCT_OVERVIEW.md`, `SDP_HOST_CONNECTION.md`, `SDP_HOST_OBSERVATION.md`, `STARTER_UPDATE.md` 등
 
 ---
 
@@ -230,40 +243,55 @@ graph TD
 
 ## 7. 실제 지원 범위 및 기다림(UNV) 목록 (`support_scope_honest`)
 
-현재 실제로 검증된 범위와 외부 인프라 대기 항목을 정직하게 구분합니다:
+현재 소스 코드와 설정만으로 증명 가능한 실제 검증 범위와, 외부 인프라 및 환경 연결이 필요한 기다림(UNV) 항목을 정직하게 구분합니다:
 
-### 1) 실제로 확인한 기능 (검증 완료)
-* Windows PowerShell 환경에서 `Node.js 24.19.0` (지원 범위 22~24) 기반 로컬 서버 기동 (`http://127.0.0.1:5189`).
-* `node --check student/extension.mjs` 문법 구문 검사 100% 무결성 확인.
-* `student/extension.mjs` 내 8대 UI 컴포넌트의 모의 데이터 및 데모 렌더링 정상 동작 확인.
-* 취약점 조회 취소, 타임아웃, 중복 응답 방지(`generation` 관리) 및 캐시 오염 차단 동작 확인.
-* 모든 화면에서 XSS 취약점 차단(`textContent` 사용) 및 상태별 색상/텍스트 명문화 확인.
+### 1) 실제로 확인한 기능 (코드 및 설정 기반 검증 완료)
+* **구문 및 정적 계약 무결성**:
+  * `node --check student/extension.mjs` 구문 검사를 통한 문법 오류 0건 및 코드 무결성 확인.
+  * `package.json`의 `engines`에 선언된 Node.js `24.19.0`과 `tools/start-alekov.ps1`의 Node.js 22~24 버전 범위 검사 스크립트 계약 일치 확인.
+* **학생 8대 UI 렌더링 함수 구현 (`student/extension.mjs`)**:
+  * `renderIdentity`부터 `renderVulnerabilities`까지 8대 렌더링 함수의 계약 충족 코드 구현.
+  * DOM XSS 취약점 원천 차단을 위한 `textContent` 및 DOM API 전면 적용 확인.
+  * 조치(Action) 렌더링 시 임의의 POST 실행 버튼을 생성하지 않고 제안과 집행 분리 계약 준수.
+* **취약점 스캐너 기본 계약 및 UI 처리**:
+  * `renderVulnerabilities`에서 서버가 반환하는 6가지 스캔 상태(`not_configured`, `not_checked`, `unverifiable`, `known_vulnerabilities`, `none_found`, `partial`)별 안전 분기 및 `data-student-package-*` 속성 바인딩 로직 구현.
+  * 현재 기본 시작 틀 환경(루트에 `package-lock.json` 및 `ON_PROJECT_DIRECTORY`가 기본 미설정된 상태)에서 `GET /api/vulnerabilities` 호출 시 계약된 기본 상태인 `{ status: 'not_configured', code: 'PROJECT_NOT_CONFIGURED', packages: [] }`가 정상 반환되는 기본 엔드포인트 동작 확인.
 
-### 2) 기다림(UNV) 목록 (실제 확인 전으로 명시)
-* **Node.js 20 및 21 환경**: package.json(24.19.0) 및 실행 도구(22~24)에서 보장하지 않으므로 미확인/미지원 상태입니다.
-* **실제 외부 상용 SDP 및 XDR 서버 연동**: 로컬 모의 엔진 및 데모 모드에서 동작을 확인하였으며, 실제 기업 엔터프라이즈 방화벽/SDP 게이트웨이와의 실시간 토큰 인증 및 격리 명령 집행은 외부 시스템 준비 대기 상태(`기다림(UNV)`)입니다.
-* **실제 상용 LLM API 유료 키 연동**: 수업용 AI 게이트웨이 모의 규격으로 응답을 수신하며, 실제 외부 유료 AI API(OpenAI/Anthropic 등)에 대한 실시간 결제 기반 추론은 대기 상태(`기다림(UNV)`)입니다.
-* **실제 OSV 라이브 대량 패키지 쿼리**: 로컬 `package-lock.json`의 승인 목록 기반 스캔 규격을 검증하였으며, 폐쇄망 환경에서의 실제 OSV 배치 조사는 인프라 설정 대기 상태(`기다림(UNV)`)입니다.
+### 2) 기다림(UNV) 목록 (코드·설정만으로 확인할 수 없어 미확인으로 명시하는 범위)
+* **특정 Windows 버전별 전수 호환성 (Windows 10 / 11 64-bit)**:
+  * 저장소의 코드 및 스크립트(`start-alekov.ps1`, `package.json`)에는 특정 Windows 10 또는 11 개별 빌드 및 64-bit 아키텍처를 강제 식별하거나 보증하는 로직이 없습니다.
+  * 따라서 지원 환경은 **'Node.js 22~24 및 Windows PowerShell이 구동되는 일반 Windows 환경'**으로 한정하며, Windows 10 / 11 개별 버전 및 에디션별 전수 동작은 미확인 상태(`기다림(UNV)`)로 명시합니다.
+* **취약점 기능의 실제 외부 연동 및 라이브 데이터 대조**:
+  * 현재 시작 틀에는 `package-lock.json`이 포함되어 있지 않으므로, 실제 유효한 lockfile 기반의 설치 패키지 대조, 공개 OSV API(`https://api.osv.dev/v1/querybatch`)와의 실시간 통신 및 실제 CVE/GHSA 취약점 매칭 결과 수신은 프로젝트 환경 및 외부 네트워크 연결이 필요한 대기 상태(`기다림(UNV)`)입니다.
+* **실시간 브라우저 런타임 상호작용 전수 검증**:
+  * 공식 판정은 서버 AI가 제출 커밋의 코드 원문을 정적 분석하여 판정하며, 학생 코드를 서버에서 직접 실행하여 브라우저 화면을 검증하지 않습니다.
+  * 따라서 패키지 조회 취소 시의 지연 응답 차단, 타임아웃 발생 시의 실시간 화면 갱신 등 브라우저 런타임 상의 동적 화면 검증은 학생 개인 로컬에서의 수동 확인 사항일 뿐 소스 코드 및 설정만으로 공식 검증을 단정할 수 없으므로 공식 런타임 인증 대기(`기다림(UNV)`)로 명시합니다.
+* **실제 외부 상용 SDP 및 XDR 서버 연동**:
+  * 로컬 모의 엔진 및 데모 모드 규격 기반이며, 실제 기업 엔터프라이즈 방화벽/SDP 게이트웨이와의 실시간 토큰 인증 및 격리 명령 집행은 외부 시스템 준비 대기 상태(`기다림(UNV)`)입니다.
+* **실제 상용 LLM API 유료 키 연동**:
+  * 수업용 AI 게이트웨이 규격을 지원하며, 실제 외부 유료 AI API(OpenAI/Anthropic 등)에 대한 실시간 결제 기반 추론은 대기 상태(`기다림(UNV)`)입니다.
+* **Node.js 20 및 21 환경**:
+  * `package.json`(24.19.0) 및 실행 도구(22~24)에서 보장하지 않으므로 미확인/미지원 상태입니다.
 
 ---
 
 ## 8. 실제 UI 경로 · 탭 · 버튼 이름 대조표 (Verification Matrix)
 
-실제 화면 및 코드(`public/index.html`, `public/app.js`, `student/extension.mjs`)에 정의된 버튼 및 요소와의 100% 일치성을 대조한 표입니다.
+실제 화면 및 코드(`public/index.html`, `public/app.js`, `student/extension.mjs`)에 정의된 버튼 및 요소와의 정적 코드 계약 대조표입니다.
 
-| 화면 탭 (Tab) | 구역 (Section) | 실제 버튼 이름 및 화면 요소 | HTML id / 요소 속성 | 동작 및 확인 상태 |
+| 화면 탭 (Tab) | 구역 (Section) | 실제 버튼 이름 및 화면 요소 | HTML id / 요소 속성 | 코드 대조 및 확인 상태 |
 |---|---|---|---|---|
-| **보호 현황** | 설치 패키지와 취약점 정보 (제공) | **`[설치 패키지 조회]`** | `id="vulnerabilities-load"` | 패키지 취약점 대조 요청 전송 (**확인 완료**) |
-| **보호 현황** | 설치 패키지와 취약점 정보 (제공) | **`[패키지 조회 취소]`** | `id="vulnerabilities-cancel"` | 조회 중 취소 및 이전 결과 제거 (**확인 완료**) |
-| **보호 현황** | 학생 패키지 조회 표시 (학생) | 패키지 행 요소 | `data-student-package-name`<br/>`data-student-package-version` | 정확한 설치 버전 대조 및 속성 부여 (**확인 완료**) |
-| **업무 앱** | 접속 요청 (제공) | 업무 앱 선택 버튼 (예: 회계, 메일) | `apps` 컨테이너 내부 버튼 | 서버에 접속 인가 판정 요청 (**확인 완료**) |
-| **업무 앱** | 판정 결과 (학생) | 판정 상태 및 사유 텍스트 | `student-decision` | `allow` / `deny` 상태 한국어 표시 (**확인 완료**) |
-| **보안 기록** | 최근 보안 사건 (제공) | 사건 행 선택 | `events` 컨테이너 내부 항목 | 보안 사건 선택 및 근거 로드 (**확인 완료**) |
-| **보안 기록** | AI 사건 설명 (제공) | **`[AI 설명 요청]`** | `id="explanation-request"` | 선택 사건 근거 기반 AI 설명 생성 (**확인 완료**) |
-| **보안 기록** | 원천 조치 (제공) | **`[조치 준비]`** | `id="action-prepare"` | 조치 제안 준비 (미실행 상태) (**확인 완료**) |
-| **보안 기록** | 원천 조치 (제공) | **`[실행 승인]`** | `id="action-execute"` | 사람 확인 후 서버 전달 (**확인 완료**) |
-| **보안 기록** | 원천 조치 (제공) | **`[원천 결과만 재조회]`** | `id="action-refresh"` | 결과 불명 시 재조회 트리거 (**확인 완료**) |
-| **보안 기록** | 학생 조치 상태 (학생) | 조치 식별 속성 (버튼 미생성) | `data-student-action-event`<br/>`data-student-action-request` | `effectApplied === true` 관측 검증 (**확인 완료**) |
-| **도움정보** | 도움정보 (제공) | **`[도움정보 불러오기]`** | `id="diag-load"` | 서버 연결 점검 결과 로드 (**확인 완료**) |
-| **도움정보** | 도움정보 (제공) | **`[확인했으며 복사합니다]`** | `id="diag-copy"` | 로드된 진단 정보를 확인 후 클립보드 복사 (**확인 완료**) |
-| **도움정보** | 통합 보안 상태 및 진단 (학생) | **`[도움정보 복사]`** | `button` (`copyBtn`) | 학생 상태·알림 영역의 진단 메타데이터 클립보드 복사 (**확인 완료**) |
+| **보호 현황** | 설치 패키지와 취약점 정보 (제공) | **`[설치 패키지 조회]`** | `id="vulnerabilities-load"` | 제공 버튼 ID 일치 (`정적 코드 일치 확인 / 라이브 OSV 조회는 UNV`) |
+| **보호 현황** | 설치 패키지와 취약점 정보 (제공) | **`[패키지 조회 취소]`** | `id="vulnerabilities-cancel"` | 제공 버튼 ID 일치 (`정적 코드 일치 확인 / 런타임 실시간 취소는 UNV`) |
+| **보호 현황** | 학생 패키지 조회 표시 (학생) | 패키지 행 요소 | `data-student-package-name`<br/>`data-student-package-version` | 학생 렌더링 함수 속성 바인딩 로직 구현 (`코드 계약 확인 완료`) |
+| **업무 앱** | 접속 요청 (제공) | 업무 앱 선택 버튼 (예: 회계, 메일) | `apps` 컨테이너 내부 버튼 | 제공 컨테이너 및 요청 분기 일치 (`정적 코드 일치 확인`) |
+| **업무 앱** | 판정 결과 (학생) | 판정 상태 및 사유 텍스트 | `student-decision` | 학생 렌더링 함수 구현 (`코드 계약 확인 완료`) |
+| **보안 기록** | 최근 보안 사건 (제공) | 사건 행 선택 | `events` 컨테이너 내부 항목 | 제공 컨테이너 및 선택 핸들러 일치 (`정적 코드 일치 확인`) |
+| **보안 기록** | AI 사건 설명 (제공) | **`[AI 설명 요청]`** | `id="explanation-request"` | 제공 버튼 ID 일치 (`정적 코드 일치 확인 / 실시간 AI 연동은 UNV`) |
+| **보안 기록** | 원천 조치 (제공) | **`[조치 준비]`** | `id="action-prepare"` | 제공 버튼 ID 일치 (`정적 코드 일치 확인`) |
+| **보안 기록** | 원천 조치 (제공) | **`[실행 승인]`** | `id="action-execute"` | 제공 버튼 ID 일치 (`정적 코드 일치 확인 / 실시간 SDP 집행은 UNV`) |
+| **보안 기록** | 원천 조치 (제공) | **`[원천 결과만 재조회]`** | `id="action-refresh"` | 제공 버튼 ID 일치 (`정적 코드 일치 확인`) |
+| **보안 기록** | 학생 조치 상태 (학생) | 조치 식별 속성 (버튼 미생성) | `data-student-action-event`<br/>`data-student-action-request` | 학생 렌더링 함수 속성 바인딩 및 제안/집행 분리 (`코드 계약 확인 완료`) |
+| **도움정보** | 도움정보 (제공) | **`[도움정보 불러오기]`** | `id="diag-load"` | 제공 버튼 ID 일치 (`정적 코드 일치 확인`) |
+| **도움정보** | 도움정보 (제공) | **`[확인했으며 복사합니다]`** | `id="diag-copy"` | 제공 버튼 ID 일치 (`정적 코드 일치 확인`) |
+| **도움정보** | 통합 보안 상태 및 진단 (학생) | **`[도움정보 복사]`** | `button` (`copyBtn`) | 학생 상태·알림 영역의 클립보드 복사 로직 구현 (`코드 계약 확인 완료`) |
