@@ -42,14 +42,14 @@ export function createStudentView() {
 
       // 2. 오류(error) 분기: 이전 사용자 값을 남기지 않고 실패 및 서버 message 표시
       const hasError = (me && me.status === 'error') ||
-                       (devices && devices.status === 'error') ||
-                       (sessions && sessions.status === 'error');
+        (devices && devices.status === 'error') ||
+        (sessions && sessions.status === 'error');
 
       if (hasError) {
         const errorMsg = me?.error?.message ||
-                         devices?.error?.message ||
-                         sessions?.error?.message ||
-                         '확인 불가';
+          devices?.error?.message ||
+          sessions?.error?.message ||
+          '확인 불가';
         const errEl = document.createElement('p');
         errEl.className = 'state state-error';
         errEl.textContent = `연결 실패: ${errorMsg}`;
@@ -59,9 +59,9 @@ export function createStudentView() {
 
       // 3. 로딩(loading) 분기: 불러오는 중 표시 (이전 값 미포함)
       const isLoading = (!me && !devices && !sessions) ||
-                        (me && me.status === 'loading') ||
-                        (devices && devices.status === 'loading') ||
-                        (sessions && sessions.status === 'loading');
+        (me && me.status === 'loading') ||
+        (devices && devices.status === 'loading') ||
+        (sessions && sessions.status === 'loading');
 
       if (isLoading) {
         const loadEl = document.createElement('p');
@@ -156,7 +156,7 @@ export function createStudentView() {
       if (Array.isArray(sessions?.data) && sessions.data.length > 0) {
         const sessSummary = document.createElement('div');
         sessSummary.className = 'muted';
-        sessSummary.textContent = `전체 세션: ${sessions.data.length}개`;
+        sessSummary.textContent = `현재 검증된 연결: ${sessions.data.length}개`;
         container.appendChild(sessSummary);
       }
 

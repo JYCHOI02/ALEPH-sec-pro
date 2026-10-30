@@ -78,15 +78,15 @@ npm.cmd run demo
 
 | 단계 | 확인한 기능 | 결과 | 확인 시각 | 비고 (모의 데이터 / 실제 연결 구분) |
 |---|---|---|---|---|
-| **13단계** | 세 메뉴와 로그인·기기 상태 (`renderIdentity`) | **재현됨** | 2026-10-29 16:00:00 | **예제 자료**: demo 모드에서 계정(me), 기기(devices), 세션(sessions) 정상 렌더링 확인. 실제 SDP 인증 연결은 기다림(UNV). |
-| **14단계** | 업무 앱 접속 판정과 사유 (`renderDecision`) | **재현됨** | 2026-10-29 16:01:00 | **예제 자료**: 4대 판정(allow, deny, challenge, unknown) 및 사유 렌더링 확인. 실제 서버 판정은 기다림(UNV). |
-| **15단계** | 내 접속 기록과 XDR 경보 (`renderEvents`) | **재현됨** | 2026-10-29 16:02:00 | **예제 자료**: 접속·XDR 기록 목록, 종류/앱/상태 필터링, 상세 보기 렌더링 확인. 실제 감사 기록은 기다림(UNV). |
-| **16단계** | 알림·기기·세션·오류·빈 화면 및 도움정보 (`renderStatus`, 미지원 조치) | **재현됨** | 2026-10-29 16:03:00 | **예제 자료**: 상태 알림, 도움정보 복사 버튼(안전한 값만 복사), 미지원 조치 비활성 버튼 확인. |
-| **17단계** | 수업용 AI(알레프게이트) 연결 상태 점검 (`renderAiConnection`) | **재현됨** | 2026-10-29 16:04:00 | **예제 자료**: 모델 수(modelCount) 표기, 7대 오류 안내, 사건 설명 미실행 주의 문구 확인. 실제 유료 AI 계정 연결은 기다림(UNV). |
-| **18단계** | 근거에 연결된 AI 보안 사건 설명 (`renderExplanation`) | **재현됨** | 2026-10-29 16:05:00 | **예제 자료**: 사건 근거-규칙 바인딩, unknown 확인불가 표기, 허위 설명 및 거짓 실행 주장(`executed: true`) 거부 확인. |
-| **19단계** | 보안 조치 요청 상태와 실제 결과 구분 (`renderAction`) | **재현됨** | 2026-10-29 16:06:00 | **예제 자료**: 제안·사람확인·ACK·원천관측 분리, 버튼 미생성 확인. 실제 원천 시스템 집행기 연결은 기다림(UNV). |
-| **20단계** | 사용 라이브러리와 취약점 정보 대조 (`renderVulnerabilities`) | **재현됨** | 2026-10-29 16:07:00 | **예제 자료**: 패키지 정확한 버전 표기, 잠금파일 메타데이터 표시, 미조회/미설정 구분 확인. 실제 OSV API 및 외부 lockfile 대조는 기다림(UNV). |
-| **21단계** | 학생용 실행 설명서 및 시스템 구성도 (`STUDENT_RUNBOOK.md`) | **재현됨** | 2026-10-29 16:08:00 | 실행 설명서, Mermaid 아키텍처 다이어그램, 제공/학생 경계 및 장애 해결표 완비 확인. |
+| **13단계** | 세 메뉴와 로그인·기기 상태 (`renderIdentity`) | **재현됨** | 2026-10-30 10:30:00 | **예제 자료**: demo 모드에서 계정(me), 기기(devices), 세션(sessions) 정상 렌더링 확인. 세션은 전체 이력이 아닌 `현재 검증된 연결: N개`로 정확히 한정 표시됨을 대조 확인. 실제 SDP 인증 연결은 기다림(UNV). |
+| **14단계** | 업무 앱 접속 판정과 사유 (`renderDecision`) | **재현됨** | 2026-10-30 10:31:00 | **예제 자료**: 4대 판정(allow, deny, challenge, unknown) 및 사유 렌더링 확인. 실제 서버 판정은 기다림(UNV). |
+| **15단계** | 내 접속 기록과 XDR 경보 (`renderEvents`) | **재현됨** | 2026-10-30 10:32:00 | **예제 자료**: 접속·XDR 기록 목록, 종류/앱/상태 필터링, 상세 보기 렌더링 확인. 실제 감사 기록은 기다림(UNV). |
+| **16단계** | 알림·기기·세션·오류·빈 화면 및 도움정보 (`renderStatus`, 미지원 조치) | **재현됨** | 2026-10-30 10:33:00 | **예제 자료**: 상태 알림, 도움정보 복사 버튼(안전한 값만 복사), 미지원 조치 비활성 버튼 확인. |
+| **17단계** | 수업용 AI(알레프게이트) 연결 상태 점검 (`renderAiConnection`) | **재현됨** | 2026-10-30 10:34:00 | **예제 자료**: 모델 수(modelCount) 표기, 7대 오류 안내, 사건 설명 미실행 주의 문구 확인. 실제 유료 AI 계정 연결은 기다림(UNV). |
+| **18단계** | 근거에 연결된 AI 보안 사건 설명 (`renderExplanation`) | **재현됨** | 2026-10-30 10:35:00 | **예제 자료**: 사건 근거-규칙 바인딩, unknown 확인불가 표기, 허위 설명 및 거짓 실행 주장(`executed: true`) 거부 확인. |
+| **19단계** | 보안 조치 요청 상태와 실제 결과 구분 (`renderAction`) | **재현됨** | 2026-10-30 10:36:00 | **예제 자료**: 제안·사람확인·ACK·원천관측 분리, 버튼 미생성 확인. 실제 원천 시스템 집행기 연결은 기다림(UNV). |
+| **20단계** | 사용 라이브러리와 취약점 정보 대조 (`renderVulnerabilities`) | **재현됨** | 2026-10-30 10:37:00 | **예제 자료**: 패키지 정확한 버전 표기, 잠금파일 메타데이터 표시, 미조회/미설정 구분 확인. 실제 OSV API 및 외부 lockfile 대조는 기다림(UNV). |
+| **21단계** | 학생용 실행 설명서 및 시스템 구성도 (`STUDENT_RUNBOOK.md`) | **재현됨** | 2026-10-30 10:38:00 | 실행 설명서, Mermaid 아키텍처 다이어그램, 제공/학생 경계 및 장애 해결표 완비 확인. |
 
 ---
 
@@ -107,28 +107,72 @@ npm.cmd run demo
 
 ---
 
-## 5. 데이터 보존 계획 (`data_preservation`)
+## 5. 데이터 보존 계획 (`data_preservation_plan`)
+
+본 프로젝트의 데이터 보존 계획은 **클라이언트 메모리 상태의 일회성**, **Git 기반 소스코드/문서 영구 보존**, 그리고 선택적 설정 시 활성화되는 **`src/actions/store.mjs`의 SQLite 조치 저장소 백업·복원 절차**의 세 계층으로 구성됩니다.
 
 ### 1) 브라우저 및 클라이언트 메모리의 일회성 원칙
-* Alekov 웹 클라이언트는 브라우저 세션 기반으로 동작하며, 비밀번호, 토큰, 조치 승인 티켓(`actionTicket`)을 브라우저의 `localStorage`나 `sessionStorage`, 쿠키에 영구 보존하지 않습니다.
-* 브라우저 새로고침(`F5`)이나 재접속 시 메모리 상태는 완전히 초기화(`idle`)되며, 이는 민감 정보의 잔류를 방지하기 위한 핵심 보안 설계입니다.
+* Alekov 웹 클라이언트는 브라우저 세션 기반으로 동작하며, 비밀번호, 토큰, 조치 승인 티켓(`actionTicket`), 일회용 확인 해시를 브라우저의 `localStorage`, `sessionStorage`, 쿠키에 영구 보존하지 않습니다.
+* 브라우저 새로고침(<kbd>F5</kbd>)이나 재접속 시 메모리 상태는 완전히 초기화(`idle`)되며, 이는 민감 정보의 잔류를 방지하기 위한 핵심 보안 설계입니다.
 
 ### 2) 소스 코드 및 문서의 형상 관리 보존 (Git Persistence)
 * 학생 구현 코드(`student/extension.mjs`) 및 모든 실행 문서(`STUDENT_RUNBOOK.md`, `STUDENT_REPRODUCTION.md`, `summary_md/*.md`)는 Git 버전 관리 시스템을 통해 커밋 단위로 영구 보존됩니다.
 * 원격 저장소(`https://github.com/JYCHOI02/ALEPH-sec-pro`)에 푸시하여 언제든 동일한 상태로 복원할 수 있습니다.
 
-### 3) 백업 및 복원 절차
-* **백업 (Backup)**:
-  1. 작업 완료 후 `git status`로 변경 사항을 확인합니다.
-  2. `git add` 및 커밋을 생성하고 원격 저장소로 `git push`합니다.
-  3. 필요 시 비공개 저장소 제출 도구(`student-source-cli.mjs`)를 통해 특정 커밋의 원문 묶음(JSON)을 프로젝트 외부에 백업합니다.
-* **복원 (Restore)**:
-  1. 새 환경에서 `git clone`을 통해 프로젝트를 복제합니다.
-  2. 검증된 특정 커밋 해시(`410cd7c`)로 `git checkout`하여 100% 동일한 상태를 복원합니다.
+### 3) 선택 설정 시 활성화되는 SQLite 조치 저장소(`src/actions/store.mjs`) 보존 계획
 
-### 4) 보존의 한계 및 제한 사항
-* 서버의 인메모리 세션 캐시 및 임시 요청 제네레이션은 서버 재시작 시 보존되지 않습니다.
-* 제공 서버가 생성하는 임시 상태는 영구 DB에 저장되지 않으며, 서버 재시작 시 초기 설정값으로 리셋됩니다.
+`src/actions/store.mjs`에는 조치 의도와 상태 전이, 감사 로그를 안전하게 보존하기 위한 SQLite 내장 저장소(`createActionStore`)가 구현되어 있습니다.
+
+#### ① 적용 범위 (Applicability Scope)
+* **기본 환경에서의 상태**: 기본 시작 틀 및 데모 모드(`npm.cmd run demo`, `node src/server.mjs`)에서는 `databasePath`가 제공되지 않으므로 조치 저장이 비활성화되며 `ACTION_UNSUPPORTED` 상태로 동작합니다.
+* **저장소 활성화 조건**: 로컬 서버 소유자가 `src/server.mjs` 기동 시 `sdpActionStartup({ databasePath, policy })` 옵션을 통해 사전에 존재하는 기존 SQLite 데이터베이스 파일의 절대 경로를 명시적으로 주입한 경우에만 활성화됩니다.
+* **엄격한 파일 조건 (`existingDatabasePath`)**:
+  * 반드시 사전에 생성된 정규 파일(`stat.isFile()`)이어야 합니다.
+  * 절대 경로(`isAbsolute(path)`)여야 합니다.
+  * 심볼릭 링크(`!stat.isSymbolicLink()`) 및 다중 링크(`stat.nlink === 1`)는 보안상 금지됩니다.
+  * 비밀번호나 API 키 등 평문 시크릿은 일체 저장되지 않습니다.
+
+#### ② 저장 데이터 스키마 및 불변성 제약 (Schema & Immutability)
+SQLite 조치 저장소는 다음 3개의 테이블과 무결성 트리거로 구성됩니다:
+* **`alekov_action_intents`**: 조치 의도 기록 (`request_id` PK, `receipt_id` UNIQUE, `scope_json`, `command_json`, `confirmation_hash`, `expires_at_ms`, `created_at_ms`).
+  * *불변 트리거*: `alekov_action_intents_no_update`, `alekov_action_intents_no_delete` 트리거를 통해 의도 레코드의 수정 및 삭제가 엄격히 차단됩니다 (`ACTION_HISTORY_IMMUTABLE`).
+* **`alekov_action_state`**: 조치 상태 (`request_id` PK, `status`, `version`, `confirmation_consumed`, `dispatcher_id`, `result_json`, `updated_at_ms`).
+  * *무결성 트리거*: `alekov_action_state_no_delete`로 삭제를 차단하며, `alekov_action_state_monotonic` 트리거를 통해 버전이 반드시 1씩만 단조 증가(`version = version + 1`)하도록 강제합니다 (`ACTION_VERSION_INVALID`).
+* **`alekov_action_audit`**: 조치 감사 이력 (`seq` PK, `request_id`, `version`, `status`, `code`, `at_ms`, `result_json`).
+  * *불변 트리거*: `alekov_action_audit_no_update`, `alekov_action_audit_no_delete` 트리거를 통해 감사 시퀀스의 사후 변조 및 삭제를 전면 차단합니다 (`ACTION_HISTORY_IMMUTABLE`).
+
+#### ③ SQLite 조치 DB 백업 방법 (Backup Procedure)
+1. **오프라인 백업 (권장)**:
+   * 로컬 서버 프로세스를 정상 종료(`Ctrl + C`)한 상태에서, `databasePath`에 지정된 SQLite 데이터베이스 파일(`.sqlite` 또는 `.db`)을 별도의 안전한 백업 디렉토리(예: `C:\AlekovBackups\action-store-backup-<YYYYMMDD>.sqlite`)로 복사합니다.
+2. **온라인 백업 (서비스 중단 불가 시)**:
+   * SQLite의 원자적 스냅샷 기능(Node.js `DatabaseSync`의 트랜잭션 정합성 또는 SQLite `VACUUM INTO '<백업경로>'`)을 사용하여 활성 트랜잭션 중 발생할 수 있는 데이터 손상(Partial Write)을 방지하며 백업합니다.
+3. **무결성 해시 보관**:
+   * 백업 파일 생성 직후 PowerShell에서 SHA-256 해시를 산출하여 보관합니다:
+     ```powershell
+     Get-FileHash -Path "C:\AlekovBackups\action-store-backup.sqlite" -Algorithm SHA256
+     ```
+
+#### ④ SQLite 조치 DB 복원 방법 (Restore Procedure)
+1. 실행 중인 로컬 서버 프로세스를 중지합니다.
+2. 백업해 둔 SQLite 데이터베이스 파일을 서버가 참조하는 원래의 `databasePath` 절대 경로 위치로 복원(복사)합니다.
+3. **파일 유효성 및 권한 점검 (`existingDatabasePath` 충족 확인)**:
+   * 복원된 파일이 정규 파일인지 확인하고, 바로가기나 심볼릭 링크가 아닌지 확인합니다.
+   * 파일의 하드링크 수가 1(`nlink === 1`)인지 확인하여 다중 참조 취약점을 방지합니다.
+4. 로컬 서버를 재기동합니다.
+
+#### ⑤ 복원 시 기존 기록의 보존 상태 및 시스템 동작 (Behavior Upon Restore)
+* **이력 및 감사 로그의 무결성 보존**:
+  * `alekov_action_intents`와 `alekov_action_audit` 테이블에 저장되어 있던 이전의 조치 의도와 감사 로그는 복원 후에도 완벽히 보존되며, 트리거에 의해 어떠한 수정이나 누락도 발생하지 않습니다.
+* **조치 상태 및 버전 승계**:
+  * `alekov_action_state`의 이전 상태(status, version, confirmation_consumed, result_json)가 그대로 복원되어 이전 조치의 단조 버전 흐름이 유지됩니다.
+* **만료된 조치의 안전한 차단**:
+  * 복원 시점에 시스템 시각(`clock()`)이 복원된 레코드의 `expires_at_ms`를 이미 초과한 경우, 복원된 `prepared` 상태의 조치를 사후에 집행하려 시도하더라도 시스템이 `ACTION_CONFIRMATION_EXPIRED` 오류를 발생시켜 기한이 지난 과거의 조치가 오집행되는 것을 원천 차단합니다.
+* **중복 조회 및 최신성 판정 유지**:
+  * 복원 후 동일 사건에 대해 결과를 재조회하더라도, `store.mjs`의 `transition` 로직이 관측 시각(`observedAt`)과 버전을 대조하여 과거 백업의 이전 결과가 최신 관측 결과를 덮어쓰지 않고 `superseded: true`로 안전하게 플래그 처리합니다.
+
+#### ⑥ 데이터 보존의 한계 및 보안 제한 사항 (Limitations)
+* **브라우저 제어 불가**: 학생 웹 클라이언트는 HTTP 요청 헤더나 바디를 통해 임의의 DB 파일 경로를 선택하거나 주입할 수 없으며, 모든 DB 파일 바인딩은 로컬 서버 호스트의 권한으로만 결정됩니다.
+* **원천 효과의 분리**: SQLite DB를 복원하여 과거의 `succeeded` 레코드가 복원되더라도, 그것은 어디까지나 과거의 관측 기록일 뿐이며 실제 원천 인프라(Firewall/EDR)에 현재 실시간 조치 효과가 영구 지속되고 있음을 보장하는 것은 아닙니다. 실제 효과는 반드시 제공 영역의 `[원천 결과만 재조회]`를 통해 확인해야 합니다.
 
 ---
 
