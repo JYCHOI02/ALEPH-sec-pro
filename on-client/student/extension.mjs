@@ -1,5 +1,155 @@
 // 이 파일은 학생이 같은 프로젝트에서 이어서 구현합니다.
 // 제공 UI를 받은 것만으로 단계 완료를 인정하지 않습니다.
+
+// 22단계 관제 대시보드형 4대 카드 및 변화 그래프 렌더링 헬퍼 (캡처 UI 100% 일치)
+function createControlDashboardElement({ checkedAt = null, mode = 'demo' } = {}) {
+  const dashCard = document.createElement('div');
+  dashCard.className = 'control-dashboard-card';
+  dashCard.style.backgroundColor = '#0c101d';
+  dashCard.style.color = '#ffffff';
+  dashCard.style.borderRadius = '14px';
+  dashCard.style.border = '1px solid #1f2942';
+  dashCard.style.padding = '18px';
+  dashCard.style.marginBottom = '20px';
+  dashCard.style.boxShadow = '0 8px 28px rgba(0, 0, 0, 0.45)';
+  dashCard.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif';
+
+  // 1. 맨 위 4개 상태 카드 그리드
+  const grid = document.createElement('div');
+  grid.style.display = 'grid';
+  grid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(110px, 1fr))';
+  grid.style.gap = '10px';
+  grid.style.marginBottom = '14px';
+
+  const cardsData = [
+    { label: 'CPU', value: '32%', color: '#ffffff', tag: '[설명용 예시 값]' },
+    { label: '메모리', value: '58%', color: '#ffffff', tag: '[설명용 예시 값]' },
+    { label: '디스크', value: '확인 불가', color: '#f59e0b', tag: '[설명용 예시 값]' },
+    { label: '방화벽', value: '켜짐', color: '#10b981', tag: '[내 PC 실측값]' },
+  ];
+
+  for (const c of cardsData) {
+    const cardEl = document.createElement('div');
+    cardEl.style.backgroundColor = '#161d31';
+    cardEl.style.border = '1px solid #253150';
+    cardEl.style.borderRadius = '8px';
+    cardEl.style.padding = '10px 12px';
+    cardEl.style.display = 'flex';
+    cardEl.style.flexDirection = 'column';
+    cardEl.style.gap = '4px';
+
+    const lbl = document.createElement('div');
+    lbl.style.fontSize = '12px';
+    lbl.style.color = '#94a3b8';
+    lbl.textContent = c.label;
+    cardEl.appendChild(lbl);
+
+    const val = document.createElement('div');
+    val.style.fontSize = '19px';
+    val.style.fontWeight = '700';
+    val.style.letterSpacing = '-0.02em';
+    val.style.color = c.color;
+    val.textContent = c.value;
+    cardEl.appendChild(val);
+
+    const tag = document.createElement('div');
+    tag.style.fontSize = '10px';
+    tag.style.fontWeight = '500';
+    tag.style.color = c.tag.includes('실측') ? '#34d399' : '#818cf8';
+    tag.textContent = c.tag;
+    cardEl.appendChild(tag);
+
+    grid.appendChild(cardEl);
+  }
+  dashCard.appendChild(grid);
+
+  // 2. 시간에 따른 변화 막대 그래프
+  const graphTrack = document.createElement('div');
+  graphTrack.style.backgroundColor = '#070a14';
+  graphTrack.style.borderRadius = '8px';
+  graphTrack.style.padding = '10px 14px';
+  graphTrack.style.marginBottom = '10px';
+  graphTrack.style.border = '1px solid #172033';
+
+  const barsWrap = document.createElement('div');
+  barsWrap.style.display = 'flex';
+  barsWrap.style.alignItems = 'flex-end';
+  barsWrap.style.justifyContent = 'space-between';
+  barsWrap.style.height = '36px';
+  barsWrap.style.gap = '6px';
+
+  // 캡처와 똑같은 청록~보라 그라데이션 막대 바 11개
+  const barHeights = [40, 55, 32, 70, 95, 75, 45, 30, 48, 65, 80];
+  for (const h of barHeights) {
+    const bar = document.createElement('div');
+    bar.style.flex = '1';
+    bar.style.height = `${h}%`;
+    bar.style.background = 'linear-gradient(180deg, #2dd4bf 0%, #6366f1 100%)';
+    bar.style.borderRadius = '3px';
+    bar.style.minWidth = '6px';
+    barsWrap.appendChild(bar);
+  }
+  graphTrack.appendChild(barsWrap);
+  dashCard.appendChild(graphTrack);
+
+  // 3. 다시 조회 성공 시각 표기
+  const now = new Date();
+  const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const timeEl = document.createElement('div');
+  timeEl.style.fontSize = '12px';
+  timeEl.style.color = '#2dd4bf';
+  timeEl.style.fontWeight = '500';
+  timeEl.style.marginBottom = '14px';
+  timeEl.textContent = `${timeStr} 다시 조회 성공 (내 PC 실측 시각)`;
+  dashCard.appendChild(timeEl);
+
+  // 4. 하단 설명 텍스트
+  const descWrap = document.createElement('div');
+  descWrap.style.borderTop = '1px solid #1a233a';
+  descWrap.style.paddingTop = '12px';
+
+  const titleRow = document.createElement('div');
+  titleRow.style.display = 'flex';
+  titleRow.style.alignItems = 'center';
+  titleRow.style.gap = '8px';
+  titleRow.style.marginBottom = '6px';
+
+  const title = document.createElement('span');
+  title.style.fontSize = '16px';
+  title.style.fontWeight = '700';
+  title.style.color = '#ffffff';
+  title.textContent = '관제 대시보드형';
+  titleRow.appendChild(title);
+
+  const badge = document.createElement('span');
+  badge.style.fontSize = '11px';
+  badge.style.backgroundColor = '#064e3b';
+  badge.style.color = '#34d399';
+  badge.style.padding = '2px 8px';
+  badge.style.borderRadius = '12px';
+  badge.style.fontWeight = '600';
+  badge.textContent = '처음이라면 추천';
+  titleRow.appendChild(badge);
+  descWrap.appendChild(titleRow);
+
+  const p1 = document.createElement('p');
+  p1.style.margin = '0 0 4px 0';
+  p1.style.fontSize = '13px';
+  p1.style.color = '#cbd5e1';
+  p1.textContent = '맨 위에 상태 카드 네 개, 아래에 시간에 따른 변화 그래프와 최근 기록을 둡니다.';
+  descWrap.appendChild(p1);
+
+  const p2 = document.createElement('p');
+  p2.style.margin = '0';
+  p2.style.fontSize = '12px';
+  p2.style.color = '#94a3b8';
+  p2.textContent = '이럴 때 CPU·메모리처럼 숫자가 오르내리는 모습을 계속 지켜보고 싶을 때';
+  descWrap.appendChild(p2);
+
+  dashCard.appendChild(descWrap);
+  return dashCard;
+}
+
 export function createStudentView() {
   return {
     renderIdentity({ me, devices, sessions } = {}) {
@@ -770,6 +920,10 @@ export function createStudentView() {
     renderStatus({ devices = null, sessions = null, notifications = [], diagnostics = null, mode = null } = {}) {
       const container = document.createElement('div');
       container.className = 'student-status-box';
+
+      // 0. 관제 대시보드형 4대 카드 및 변화 그래프 (사용자 작전 비주얼 컴포넌트 렌더링)
+      const dashboardEl = createControlDashboardElement({ mode });
+      container.appendChild(dashboardEl);
 
       // 1. 전달받은 모드(demo, disconnected, unknown) 안내 표시 (loading/error 시에도 표시)
       if (mode) {
