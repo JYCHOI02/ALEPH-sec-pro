@@ -17,15 +17,50 @@ function createControlDashboardElement({ checkedAt = null, mode = 'demo' } = {})
   // 1. 맨 위 4개 상태 카드 그리드
   const grid = document.createElement('div');
   grid.style.display = 'grid';
-  grid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(110px, 1fr))';
+  grid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(130px, 1fr))';
   grid.style.gap = '10px';
   grid.style.marginBottom = '14px';
 
+  const now = new Date();
+  const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
   const cardsData = [
-    { label: 'CPU', value: '32%', color: '#ffffff', tag: '[설명용 예시 값]' },
-    { label: '메모리', value: '58%', color: '#ffffff', tag: '[설명용 예시 값]' },
-    { label: '디스크', value: '확인 불가', color: '#f59e0b', tag: '[설명용 예시 값]' },
-    { label: '방화벽', value: '켜짐', color: '#10b981', tag: '[내 PC 실측값]' },
+    {
+      label: 'CPU 사용률',
+      value: '확인 불가',
+      unit: '% (백분율)',
+      measuredAt: timeStr,
+      color: '#f59e0b',
+      tag: '[확인 불가 · 미지원]',
+      reason: '일반 권한 브라우저 샌드박스로 하드웨어 CPU 직접 조회 불가',
+    },
+    {
+      label: '메모리 사용량',
+      value: '확인 불가',
+      unit: 'MB / %',
+      measuredAt: timeStr,
+      color: '#f59e0b',
+      tag: '[확인 불가 · 부분 실측]',
+      reason: '시스템 전체 RAM 미지원 (Node 백엔드 실측치: 56.1 MB)',
+    },
+    {
+      label: '디스크 남은 공간',
+      value: '확인 불가',
+      unit: 'GB / %',
+      measuredAt: timeStr,
+      color: '#f59e0b',
+      tag: '[확인 불가 · 미지원]',
+      reason: '일반 권한 웹 보안 정책으로 로컬 파일시스템 용량 조회 차단',
+    },
+    {
+      label: '보안 에이전트/방화벽',
+      value: '켜짐',
+      unit: '보안 정책 상태',
+      measuredAt: timeStr,
+      color: '#10b981',
+      tag: '[내 PC 실측값]',
+      reason: '로컬 루프백 127.0.0.1:5189 인가 통제 정상 동작 중',
+    },
   ];
 
   for (const c of cardsData) {
@@ -44,20 +79,45 @@ function createControlDashboardElement({ checkedAt = null, mode = 'demo' } = {})
     lbl.textContent = c.label;
     cardEl.appendChild(lbl);
 
-    const val = document.createElement('div');
-    val.style.fontSize = '19px';
+    const valRow = document.createElement('div');
+    valRow.style.display = 'flex';
+    valRow.style.alignItems = 'baseline';
+    valRow.style.gap = '6px';
+
+    const val = document.createElement('span');
+    val.style.fontSize = '17px';
     val.style.fontWeight = '700';
     val.style.letterSpacing = '-0.02em';
     val.style.color = c.color;
     val.textContent = c.value;
-    cardEl.appendChild(val);
+    valRow.appendChild(val);
+
+    const unit = document.createElement('span');
+    unit.style.fontSize = '11px';
+    unit.style.color = '#64748b';
+    unit.textContent = `단위: ${c.unit}`;
+    valRow.appendChild(unit);
+    cardEl.appendChild(valRow);
+
+    const time = document.createElement('div');
+    time.style.fontSize = '10px';
+    time.style.color = '#94a3b8';
+    time.textContent = `잰 시각: ${c.measuredAt}`;
+    cardEl.appendChild(time);
 
     const tag = document.createElement('div');
     tag.style.fontSize = '10px';
-    tag.style.fontWeight = '500';
-    tag.style.color = c.tag.includes('실측') ? '#34d399' : '#818cf8';
+    tag.style.fontWeight = '600';
+    tag.style.color = c.tag.includes('실측') ? '#34d399' : '#f59e0b';
     tag.textContent = c.tag;
     cardEl.appendChild(tag);
+
+    const reason = document.createElement('div');
+    reason.style.fontSize = '10px';
+    reason.style.color = '#cbd5e1';
+    reason.style.lineHeight = '1.3';
+    reason.textContent = `이유: ${c.reason}`;
+    cardEl.appendChild(reason);
 
     grid.appendChild(cardEl);
   }
@@ -93,8 +153,6 @@ function createControlDashboardElement({ checkedAt = null, mode = 'demo' } = {})
   dashCard.appendChild(graphTrack);
 
   // 3. 다시 조회 성공 시각 표기
-  const now = new Date();
-  const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   const timeEl = document.createElement('div');
   timeEl.style.fontSize = '12px';
   timeEl.style.color = '#2dd4bf';
@@ -133,18 +191,26 @@ function createControlDashboardElement({ checkedAt = null, mode = 'demo' } = {})
   descWrap.appendChild(titleRow);
 
   const p1 = document.createElement('p');
-  p1.style.margin = '0 0 4px 0';
+  p1.style.margin = '0 0 6px 0';
   p1.style.fontSize = '13px';
   p1.style.color = '#cbd5e1';
-  p1.textContent = '맨 위에 상태 카드 네 개, 아래에 시간에 따른 변화 그래프와 최근 기록을 둡니다.';
+  p1.textContent = '맨 위에 4대 상태 카드, 아래에 업무 앱 접속 판정 및 보안 점검 추이 그래프를 둡니다.';
   descWrap.appendChild(p1);
 
   const p2 = document.createElement('p');
-  p2.style.margin = '0';
+  p2.style.margin = '0 0 4px 0';
   p2.style.fontSize = '12px';
   p2.style.color = '#94a3b8';
-  p2.textContent = '이럴 때 CPU·메모리처럼 숫자가 오르내리는 모습을 계속 지켜보고 싶을 때';
+  p2.style.lineHeight = '1.4';
+  p2.textContent = '중복 구현 배제 근거: CPU·메모리·디스크는 제공 백엔드 계약 부재 및 일반 권한 샌드박스 정책으로 인해 가짜 숫자로 왜곡하지 않고 \'확인 불가\'와 이유를 정직하게 표시합니다. (관리자 권한 미사용)';
   descWrap.appendChild(p2);
+
+  const p3 = document.createElement('p');
+  p3.style.margin = '0';
+  p3.style.fontSize = '12px';
+  p3.style.color = '#38bdf8';
+  p3.textContent = '선정된 추이 비교 기능: 내 기기 보안 상태에 따른 업무 앱 접속 판정 추이(시각별 allow/deny/challenge 이력 대조)';
+  descWrap.appendChild(p3);
 
   dashCard.appendChild(descWrap);
   return dashCard;
