@@ -1440,21 +1440,27 @@ export function createStudentView() {
 
       // 2-3. 점검 실패 상태 (error)
       if (status === 'error') {
-        const stateEl = document.createElement('p');
-        stateEl.className = 'state state-error';
-        stateEl.textContent = '점검 실패 (error)';
-        container.appendChild(stateEl);
-
         const errCode = error?.code || 'UNKNOWN_AI_ERROR';
         const errMsg = error?.message || 'AI 연결 점검 중 오류가 발생했습니다.';
+        const isPendingProvisioning = ['ON_AI_PROVISIONING_PENDING', 'AI_REQUEST_UNVERIFIED', 'ON_AI_AUTHORIZATION_CHANGED', 'SUBJECT_SCOPE_UNVERIFIED'].includes(errCode);
+
+        const stateEl = document.createElement('p');
+        if (isPendingProvisioning) {
+          stateEl.className = 'state state-unknown';
+          stateEl.textContent = '이용 권한 준비 대기 중 (provisioning_pending)';
+        } else {
+          stateEl.className = 'state state-error';
+          stateEl.textContent = '점검 실패 (error)';
+        }
+        container.appendChild(stateEl);
 
         const errBox = document.createElement('div');
         errBox.className = 'error-box';
         errBox.style.marginTop = '8px';
         errBox.style.padding = '10px 12px';
         errBox.style.borderRadius = '8px';
-        errBox.style.backgroundColor = 'var(--deny-soft, #fdeceb)';
-        errBox.style.border = '1px solid var(--deny, #b42318)';
+        errBox.style.backgroundColor = isPendingProvisioning ? 'var(--warn-soft, #fef6ee)' : 'var(--deny-soft, #fdeceb)';
+        errBox.style.border = isPendingProvisioning ? '1px solid var(--warn, #b54708)' : '1px solid var(--deny, #b42318)';
         errBox.style.marginBottom = '8px';
 
         const pCode = document.createElement('p');
@@ -2106,8 +2112,13 @@ export function createStudentView() {
         pDesc.style.color = 'var(--deny, #b42318)';
         pDesc.textContent = '사람 확인 기한이 지났습니다(expired). 이번 준비 정보로는 집행할 수 없으므로 사건에서 조치를 다시 준비하세요.';
       } else if (effectiveStatus === 'error') {
-        pDesc.style.color = 'var(--deny, #b42318)';
-        pDesc.textContent = '조치 요청이 정상적으로 처리되지 않았습니다. 오류 원인을 확인하세요.';
+        if (error?.code === 'ACTION_UNSUPPORTED') {
+          pDesc.style.color = 'var(--warn, #b54708)';
+          pDesc.textContent = '원천 조치 미지원: 현재 원천 서버의 조치 연결과 권한 확인을 지원하지 않습니다. 이는 인프라 준비 대기 상태(UNV)이며 실패가 아닙니다.';
+        } else {
+          pDesc.style.color = 'var(--deny, #b42318)';
+          pDesc.textContent = '조치 요청이 정상적으로 처리되지 않았습니다. 오류 원인을 확인하세요.';
+        }
       }
       infoBox.appendChild(pDesc);
 

@@ -17,9 +17,13 @@
 * **외부 의존성**: **없음**
   * `package.json`에 `private: true`로 선언되어 있으며 외부 npm 패키지를 설치하지 않습니다 (`npm install` 불필요). Node.js 내장 모듈만을 사용하여 구동됩니다.
 
-### 2) Windows PowerShell 보안 정책 주의사항
-* Windows의 기본 스크립트 실행 정책(`ExecutionPolicy`) 제한으로 인해 `npm` 입력 시 `npm.ps1 파일을 로드할 수 없습니다(PSSecurityException)` 오류가 발생할 수 있습니다.
-* 따라서 PowerShell에서는 **`npm.cmd`** 배치 파일을 명시하거나, `node src/server.mjs` 명령어로 직접 실행하는 것을 표준 절차로 삼습니다.
+### 2) Windows PowerShell 보안 정책 및 포장 형태 작전
+* **포장 형태 작전 (`no_packaging_direct_folder_run`)**:
+  * 본 프로젝트는 별도의 실행 파일 포장(exe 패키징, electron-builder, npm pack 등) 명령을 실행하지 않으며, **포장 없이 `on-client` 프로젝트 폴더에서 직접 실행**합니다.
+  * 외부 빌드나 번들러 없이 Node.js 내장 런타임만을 사용하여 실행 무결성을 보장합니다.
+* **Windows PowerShell 보안 정책 주의사항**:
+  * Windows의 기본 스크립트 실행 정책(`ExecutionPolicy`) 제한으로 인해 `npm` 입력 시 `npm.ps1 파일을 로드할 수 없습니다(PSSecurityException)` 오류가 발생할 수 있습니다.
+  * 따라서 PowerShell에서는 **`npm.cmd`** 배치 파일을 명시하거나, `node src/server.mjs` 명령어로 직접 실행하는 것을 표준 절차로 삼습니다.
 
 ---
 
@@ -295,3 +299,21 @@ graph TD
 | **도움정보** | 도움정보 (제공) | **`[도움정보 불러오기]`** | `id="diag-load"` | 제공 버튼 ID 일치 (`정적 코드 일치 확인`) |
 | **도움정보** | 도움정보 (제공) | **`[확인했으며 복사합니다]`** | `id="diag-copy"` | 제공 버튼 ID 일치 (`정적 코드 일치 확인`) |
 | **도움정보** | 통합 보안 상태 및 진단 (학생) | **`[도움정보 복사]`** | `button` (`copyBtn`) | 학생 상태·알림 영역의 클립보드 복사 로직 구현 (`코드 계약 확인 완료`) |
+
+---
+
+## 9. 22단계 관제 대시보드형 화면 틀 및 포장 없는 실행 검증 (`dashboard_and_direct_folder_verified`)
+
+### 1) 관제 대시보드형 화면 구조 (상단 4대 카드 + 하단 추이/기록)
+* **상단 4대 관제 카드**:
+  1. **카드 1 (사용자·세션)**: 계정 식별자 및 세션 활성 상태 (`renderIdentity` - 내 PC 실측값: `practice-user`, 세션 `active`)
+  2. **카드 2 (기기 준수)**: 단말기 보안 무결성 (`renderIdentity` - 내 PC 실측값: `practice-pc`, 상태 `unknown`)
+  3. **카드 3 (AI 게이트웨이)**: AI 모델 연결 및 인가 상태 (`renderAiConnection` - 내 PC 실측값: 권한 준비 대기 중 `ON_AI_PROVISIONING_PENDING`)
+  4. **카드 4 (패키지 무결성)**: OSV 오픈소스 취약점 스캔 (`renderVulnerabilities` - 내 PC 실측값: 조회 준비 미완료 `PROJECT_NOT_CONFIGURED`)
+* **하단 추이 및 사건 기록**:
+  * **접속 판정 추이**: 업무 앱 접속 시 인가 결과 (`renderDecision` - 내 PC 실측값: 학습 자료실 `allow`, 예제 정책 허용)
+  * **XDR 사건 기록 타임라인**: 최근 보안 사건 상세 및 근거 대조 (`renderEvents` - 내 PC 실측값: `event-01`, 근거 `e-01: deny`)
+
+### 2) 포장 없는 폴더 직접 실행 보증
+* **포장 명령 미실행 원칙**: 별도의 exe 패키징이나 번들러 명령을 실행하지 않고, Git 클론 상태의 `on-client` 폴더에서 `npm.cmd run demo` (또는 `node src/server.mjs --demo`)로 즉시 동일한 결과를 재현합니다.
+* **무결성 확인 명령**: `node --check student/extension.mjs` 문법 검사 0 에러 통과 확인 완료.
